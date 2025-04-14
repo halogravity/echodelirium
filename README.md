@@ -1,6 +1,5 @@
 Echo Delirium
 
-Overview
 Echo Delirium is an experimental audio synthesizer that transforms recorded sounds into surreal musical instruments using AI-powered processing. It combines traditional synthesis techniques with neural networks to create evolving, otherworldly soundscapes that blur the line between reality and hallucination.
 
 Recording
