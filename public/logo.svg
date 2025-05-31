@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="skullGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#500;stop-opacity:0.5"/>
+      <stop offset="100%" style="stop-color:#000;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="distortion">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2"/>
+    </filter>
+  </defs>
+  
+  <!-- Background glow -->
+  <circle cx="50" cy="50" r="48" fill="url(#skullGlow)"/>
+  
+  <!-- Pentagram -->
+  <path 
+    d="M50 5 L90 82 L15 37 H85 L10 82 Z" 
+    fill="none" 
+    stroke="#300" 
+    stroke-width="1"
+    opacity="0.3"
+  />
+  
+  <!-- Skull base -->
+  <path 
+    d="M50 25
+       C30 25, 20 40, 20 55
+       C20 70, 30 80, 50 80
+       C70 80, 80 70, 80 55
+       C80 40, 70 25, 50 25
+       M35 55
+       C35 45, 45 45, 45 55
+       M55 55
+       C55 45, 65 45, 65 55
+       M40 70
+       Q50 75, 60 70"
+    fill="none"
+    stroke="#600"
+    stroke-width="2"
+    filter="url(#distortion)"
+  />
+</svg>
