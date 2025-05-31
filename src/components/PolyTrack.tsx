@@ -304,6 +304,9 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({ currentStep, stepA
           rolloff: -24
         }
       }).toDestination();
+
+      // Set initial volume
+      synthRef.current.volume.value = -6; // Slightly reduce default volume
     }
 
     return () => {
@@ -379,19 +382,29 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({ currentStep, stepA
 
       const chordIndex = Math.floor(step / 4) % params.chordProgression.length;
       const currentChord = params.chordProgression[chordIndex];
-      const chordNotes = Chord.get(currentChord).notes.map(note => `${note}${params.octave}`);
+      
+      // Get chord notes with proper octave
+      const chordNotes = Chord.get(currentChord).notes.map(note => {
+        // Ensure proper note format for Tone.js
+        const baseNote = note.replace('#', 's');
+        return `${baseNote}${params.octave}`;
+      });
 
       const timeOffset = 0.001;
-      const adjustedTime = time ? time + timeOffset : undefined;
+      const adjustedTime = time ? time + timeOffset : Tone.now() + timeOffset;
 
+      // Release previous notes
       if (currentNotesRef.current.length > 0) {
         synthRef.current.triggerRelease(currentNotesRef.current, adjustedTime);
         currentNotesRef.current = [];
       }
 
+      // Check if step is active and trigger new notes
       const stepPattern = patternRef.current[step];
       if (stepPattern.some(isActive => isActive)) {
-        synthRef.current.triggerAttack(chordNotes, adjustedTime);
+        // Add slight velocity variation for more natural sound
+        const velocity = 0.7 + Math.random() * 0.3;
+        synthRef.current.triggerAttack(chordNotes, adjustedTime, velocity);
         currentNotesRef.current = chordNotes;
       }
     },
