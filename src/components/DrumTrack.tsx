@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Zap, Upload } from 'lucide-react';
+import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Upload } from 'lucide-react';
 import { Howl } from 'howler';
 import { AudioLoader } from '../lib/audioLoader';
 import { supabase } from '../lib/supabase';
@@ -27,6 +27,9 @@ export interface DrumTrackRef {
   stop: () => void;
 }
 
+const STEP_OPTIONS = [4, 8, 16, 32, 64] as const;
+type StepAmount = typeof STEP_OPTIONS[number];
+
 const DEFAULT_SAMPLES = [
   { id: 'kick', name: 'Kick', path: '/samples/kick.wav' },
   { id: 'snare', name: 'Snare', path: '/samples/snare.wav' },
@@ -44,6 +47,7 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({ currentStep, stepA
   const [userSamples, setUserSamples] = useState<Sample[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [localStepAmount, setLocalStepAmount] = useState<StepAmount>(stepAmount as StepAmount);
   const soundRef = useRef<Howl | null>(null);
   const patternRef = useRef(pattern);
 
@@ -214,6 +218,22 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({ currentStep, stepA
     }
   };
 
+  const handleStepAmountChange = (steps: number) => {
+    const newStepAmount = steps as StepAmount;
+    setLocalStepAmount(newStepAmount);
+    
+    // Update pattern length while preserving existing steps
+    setPattern(prev => {
+      const newPattern = Array(newStepAmount).fill(false);
+      prev.forEach((step, i) => {
+        if (i < newStepAmount) {
+          newPattern[i] = step;
+        }
+      });
+      return newPattern;
+    });
+  };
+
   return (
     <div className="bg-black/40 p-4 border border-red-900/20">
       <div className="flex items-center justify-between mb-4">
@@ -233,6 +253,21 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({ currentStep, stepA
             {name || 'Drum Track'}
           </h3>
         </div>
+
+        {!isCollapsed && (
+          <div className="flex items-center gap-2">
+            <span className="text-red-500/70 text-xs font-mono">Steps:</span>
+            <select
+              value={localStepAmount}
+              onChange={(e) => handleStepAmountChange(parseInt(e.target.value))}
+              className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
+            >
+              {STEP_OPTIONS.map(amount => (
+                <option key={amount} value={amount}>{amount}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {!isCollapsed && (
@@ -315,7 +350,7 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({ currentStep, stepA
           <div className="overflow-x-auto">
             <div 
               className="inline-flex gap-1 min-w-full" 
-              style={{ width: `max(100%, ${stepAmount * 40}px)` }}
+              style={{ width: `max(100%, ${localStepAmount * 40}px)` }}
             >
               {pattern.map((isActive, step) => (
                 <button
