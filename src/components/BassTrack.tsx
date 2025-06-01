@@ -73,359 +73,34 @@ const BASS_PATTERNS: PatternPreset[] = [
       false
     ]),
     scale: { rootNote: 'C', octave: 2, selectedScale: 'minor' }
-  },
-  {
-    name: "Techno Pulse",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i % 2 === 0,
-      i % 8 === 4,
-      i % 8 === 6,
-      false,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 2, selectedScale: 'phrygian' }
-  },
-  {
-    name: "Funk Groove",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i % 4 === 0,
-      i % 4 === 2,
-      i % 8 === 6,
-      i % 8 === 7,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 2, selectedScale: 'dorian' }
-  },
-  {
-    name: "Dark Ambient",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i === 0 || i === 8,
-      i === 4 || i === 12,
-      i === 6 || i === 14,
-      false,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 1, selectedScale: 'locrian' }
-  },
-  {
-    name: "Minimal Tech",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i % 4 === 0,
-      i % 8 === 3,
-      i % 8 === 5,
-      i % 16 === 14,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 2, selectedScale: 'phrygian' }
-  },
-  {
-    name: "Breakbeat Bass",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i === 0 || i === 6 || i === 10,
-      i === 4 || i === 12,
-      i === 8 || i === 14,
-      false,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 2, selectedScale: 'minor' }
-  },
-  {
-    name: "Jungle Roller",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i === 0 || i === 7 || i === 11,
-      i === 3 || i === 14,
-      i === 6 || i === 13,
-      i === 9,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 2, selectedScale: 'minor' }
-  },
-  {
-    name: "Garage Skip",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i % 8 === 0,
-      i % 8 === 2,
-      i % 8 === 5,
-      i % 16 === 11,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 2, selectedScale: 'dorian' }
-  },
-  {
-    name: "Trap 808",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i === 0 || i === 7,
-      i === 3 || i === 11,
-      i === 4,
-      i === 12,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 1, selectedScale: 'minor' }
-  },
-  {
-    name: "IDM Glitch",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i % 5 === 0,
-      i % 7 === 0,
-      i % 3 === 0,
-      i % 11 === 0,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 3, selectedScale: 'lydian' }
-  },
-  {
-    name: "Drone Pulse",
-    pattern: Array(16).fill(null).map((_, i) => [
-      i % 16 === 0,
-      i % 16 === 8,
-      i % 16 === 12,
-      i % 16 === 14,
-      false
-    ]),
-    scale: { rootNote: 'C', octave: 1, selectedScale: 'phrygian' }
   }
 ];
 
-const SOUND_PRESETS = [
-  {
-    name: "Deep Sub",
-    settings: {
-      oscillatorType: "sine",
-      attack: 0.01,
-      decay: 0.3,
-      sustain: 0.8,
-      release: 0.2,
-      filterFreq: 200,
-      filterQ: 1
-    }
-  },
-  {
-    name: "Acid Bass",
-    settings: {
-      oscillatorType: "sawtooth",
-      attack: 0.01,
-      decay: 0.2,
-      sustain: 0.6,
-      release: 0.1,
-      filterFreq: 1200,
-      filterQ: 8
-    }
-  },
-  {
-    name: "Smooth Bass",
-    settings: {
-      oscillatorType: "triangle",
-      attack: 0.05,
-      decay: 0.4,
-      sustain: 0.7,
-      release: 0.3,
-      filterFreq: 800,
-      filterQ: 2
-    }
-  },
-  {
-    name: "808 Sub",
-    settings: {
-      oscillatorType: "sine",
-      attack: 0.02,
-      decay: 0.8,
-      sustain: 0.9,
-      release: 0.6,
-      filterFreq: 100,
-      filterQ: 1.5
-    }
-  },
-  {
-    name: "Reese Bass",
-    settings: {
-      oscillatorType: "sawtooth",
-      attack: 0.05,
-      decay: 0.3,
-      sustain: 0.8,
-      release: 0.4,
-      filterFreq: 400,
-      filterQ: 6
-    }
-  },
-  {
-    name: "Pluck Bass",
-    settings: {
-      oscillatorType: "triangle",
-      attack: 0.001,
-      decay: 0.1,
-      sustain: 0.3,
-      release: 0.1,
-      filterFreq: 2000,
-      filterQ: 4
-    }
-  },
-  {
-    name: "FM Bass",
-    settings: {
-      oscillatorType: "square",
-      attack: 0.01,
-      decay: 0.2,
-      sustain: 0.7,
-      release: 0.3,
-      filterFreq: 600,
-      filterQ: 3
-    }
-  },
-  {
-    name: "Wobble Bass",
-    settings: {
-      oscillatorType: "sawtooth",
-      attack: 0.05,
-      decay: 0.6,
-      sustain: 0.8,
-      release: 0.5,
-      filterFreq: 300,
-      filterQ: 10
-    }
-  },
-  {
-    name: "Analog Bass",
-    settings: {
-      oscillatorType: "triangle",
-      attack: 0.03,
-      decay: 0.3,
-      sustain: 0.6,
-      release: 0.4,
-      filterFreq: 1000,
-      filterQ: 2.5
-    }
-  },
-  {
-    name: "Distorted Bass",
-    settings: {
-      oscillatorType: "square",
-      attack: 0.02,
-      decay: 0.4,
-      sustain: 0.7,
-      release: 0.3,
-      filterFreq: 1500,
-      filterQ: 5
-    }
-  },
-  {
-    name: "Techno Sub",
-    settings: {
-      oscillatorType: "sine",
-      attack: 0.03,
-      decay: 0.5,
-      sustain: 0.8,
-      release: 0.4,
-      filterFreq: 150,
-      filterQ: 2
-    }
-  },
-  {
-    name: "Dub Wobble",
-    settings: {
-      oscillatorType: "triangle",
-      attack: 0.08,
-      decay: 0.7,
-      sustain: 0.6,
-      release: 0.8,
-      filterFreq: 250,
-      filterQ: 8
-    }
-  },
-  {
-    name: "Future Bass",
-    settings: {
-      oscillatorType: "sawtooth",
-      attack: 0.04,
-      decay: 0.3,
-      sustain: 0.7,
-      release: 0.5,
-      filterFreq: 800,
-      filterQ: 4
-    }
-  },
-  {
-    name: "Minimal Thump",
-    settings: {
-      oscillatorType: "sine",
-      attack: 0.01,
-      decay: 0.2,
-      sustain: 0.4,
-      release: 0.3,
-      filterFreq: 180,
-      filterQ: 1.2
-    }
-  },
-  {
-    name: "Neuro Bass",
-    settings: {
-      oscillatorType: "sawtooth",
-      attack: 0.02,
-      decay: 0.4,
-      sustain: 0.6,
-      release: 0.4,
-      filterFreq: 500,
-      filterQ: 12
-    }
-  }
-];
-
-const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepAmount, onStepAmountChange }, ref) => {
-  const synthRef = useRef<Tone.MonoSynth | null>(null);
-  const currentNoteRef = useRef<string | null>(null);
-  const patternRef = useRef<boolean[][]>([]);
-  const [savedPatterns, setSavedPatterns] = useState<PatternPreset[]>(() => {
-    const saved = localStorage.getItem('bassPatterns');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [newPatternName, setNewPatternName] = useState('');
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
+const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ 
+  currentStep, 
+  stepAmount, 
+  onStepAmountChange 
+}, ref) => {
+  const [pattern, setPattern] = useState<boolean[][]>(Array(stepAmount).fill(null).map(() => Array(5).fill(false)));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [localStepAmount, setLocalStepAmount] = useState<StepAmount>(stepAmount as StepAmount);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [params, setParams] = useState(() => ({
+    rootNote: 'C',
+    octave: 2,
+    selectedScale: 'major',
+    attack: 0.01,
+    decay: 0.3,
+    sustain: 0.8,
+    release: 0.2,
+    filterFreq: 800,
+    filterQ: 2,
+    oscillatorType: "sawtooth" as OscillatorType
+  }));
 
-  const [params, setParams] = useState(() => {
-    const savedParams = localStorage.getItem('bassParams');
-    return savedParams ? JSON.parse(savedParams) : {
-      rootNote: 'C',
-      octave: 2,
-      selectedScale: 'major',
-      attack: 0.01,
-      decay: 0.3,
-      sustain: 0.8,
-      release: 0.2,
-      filterFreq: 800,
-      filterQ: 2,
-      oscillatorType: "sawtooth" as OscillatorType
-    };
-  });
-
-  const [pattern, setPattern] = useState<boolean[][]>(() => {
-    const savedPattern = localStorage.getItem('bassCurrentPattern');
-    if (savedPattern) {
-      const parsed = JSON.parse(savedPattern);
-      if (parsed.length === stepAmount) {
-        return parsed;
-      }
-    }
-    const scaleNotes = Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes;
-    return Array(stepAmount).fill(null).map(() => Array(scaleNotes.length).fill(false));
-  });
-
-  useEffect(() => {
-    localStorage.setItem('bassCurrentPattern', JSON.stringify(pattern));
-  }, [pattern]);
-
-  useEffect(() => {
-    localStorage.setItem('bassParams', JSON.stringify(params));
-  }, [params]);
-
-  useEffect(() => {
-    patternRef.current = pattern;
-  }, [pattern]);
-
-  useEffect(() => {
-    localStorage.setItem('bassPatterns', JSON.stringify(savedPatterns));
-  }, [savedPatterns]);
+  const synthRef = useRef<Tone.MonoSynth | null>(null);
+  const currentNoteRef = useRef<string | null>(null);
+  const patternRef = useRef(pattern);
+  const lastTriggerTimeRef = useRef(0);
 
   useEffect(() => {
     if (!synthRef.current) {
@@ -473,38 +148,8 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
   }, [params]);
 
   useEffect(() => {
-    const scaleNotes = Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes;
-    const newPattern = Array(stepAmount).fill(null).map((_, stepIndex) => {
-      if (stepIndex < pattern.length) {
-        const existingRow = pattern[stepIndex];
-        if (existingRow.length === scaleNotes.length) {
-          return [...existingRow];
-        }
-        return Array(scaleNotes.length).fill(false).map((_, noteIndex) => 
-          noteIndex < existingRow.length ? existingRow[noteIndex] : false
-        );
-      }
-      return Array(scaleNotes.length).fill(false);
-    });
-    setPattern(newPattern);
-  }, [stepAmount, params.rootNote, params.octave, params.selectedScale]);
-
-  useEffect(() => {
-    if (scrollContainerRef.current && currentStep > 0) {
-      const container = scrollContainerRef.current;
-      const stepWidth = 40;
-      const containerWidth = container.clientWidth;
-      const scrollPosition = container.scrollLeft;
-      const stepPosition = currentStep * stepWidth;
-
-      if (stepPosition < scrollPosition || stepPosition > scrollPosition + containerWidth - stepWidth) {
-        container.scrollTo({
-          left: Math.max(0, stepPosition - containerWidth / 2 + stepWidth),
-          behavior: 'smooth'
-        });
-      }
-    }
-  }, [currentStep]);
+    patternRef.current = pattern;
+  }, [pattern]);
 
   useImperativeHandle(ref, () => ({
     getCurrentNote: () => currentNoteRef.current,
@@ -523,18 +168,20 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
         .map((isActive, index) => isActive ? scaleNotes[index] : null)
         .filter(Boolean) as string[];
 
-      const timeOffset = 0.001;
-      const adjustedTime = time ? time + timeOffset : undefined;
-
-      if (currentNoteRef.current) {
-        synthRef.current.triggerRelease(adjustedTime);
-        currentNoteRef.current = null;
-      }
-
       if (activeNotes.length > 0) {
+        const now = Tone.now();
+        const minTimeBetweenNotes = 0.05; // 50ms minimum between notes
+        const timeOffset = Math.max(0, lastTriggerTimeRef.current + minTimeBetweenNotes - now);
+        const scheduleTime = time || (now + timeOffset);
+
+        if (currentNoteRef.current) {
+          synthRef.current.triggerRelease(scheduleTime);
+        }
+
         const note = activeNotes[0];
-        synthRef.current.triggerAttack(note, adjustedTime);
+        synthRef.current.triggerAttack(note, scheduleTime);
         currentNoteRef.current = note;
+        lastTriggerTimeRef.current = scheduleTime;
       }
     },
     stop: () => {
@@ -545,9 +192,28 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
     }
   }), [params.rootNote, params.octave, params.selectedScale]);
 
-  const toggleNote = (stepIndex: number, noteIndex: number) => {
-    setPattern(prevPattern => 
-      prevPattern.map((step, i) =>
+  const handleStepAmountChange = (steps: number) => {
+    const newStepAmount = steps as StepAmount;
+    setLocalStepAmount(newStepAmount);
+    
+    setPattern(prev => {
+      const newPattern = Array(steps).fill(null).map((_, stepIndex) => {
+        if (stepIndex < prev.length) {
+          return [...prev[stepIndex]];
+        }
+        return Array(5).fill(false);
+      });
+      return newPattern;
+    });
+
+    if (onStepAmountChange) {
+      onStepAmountChange(steps);
+    }
+  };
+
+  const toggleStep = (stepIndex: number, noteIndex: number) => {
+    setPattern(prev => 
+      prev.map((step, i) =>
         i === stepIndex
           ? step.map((isActive, j) => j === noteIndex ? !isActive : isActive)
           : step
@@ -556,17 +222,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
   };
 
   const clearPattern = () => {
-    const emptyPattern = Array(stepAmount).fill(null).map(() => 
-      Array(Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes.length).fill(false)
-    );
-    setPattern(emptyPattern);
-  };
-
-  const loadPreset = (preset: typeof SOUND_PRESETS[0]) => {
-    setParams(prev => ({
-      ...prev,
-      ...preset.settings
-    }));
+    setPattern(Array(localStepAmount).fill(null).map(() => Array(5).fill(false)));
   };
 
   const loadPattern = (preset: PatternPreset) => {
@@ -577,22 +233,6 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
       octave: preset.scale.octave,
       selectedScale: preset.scale.selectedScale
     }));
-  };
-
-  const handleStepAmountChange = (steps: number) => {
-    setLocalStepAmount(steps as StepAmount);
-    const newPattern = Array(steps).fill(null).map((_, stepIndex) => {
-      if (stepIndex < pattern.length) {
-        return [...pattern[stepIndex]];
-      }
-      return Array(Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes.length).fill(false);
-    });
-    setPattern(newPattern);
-
-    // Notify parent of step amount change
-    if (onStepAmountChange) {
-      onStepAmountChange(steps);
-    }
   };
 
   return (
@@ -632,19 +272,6 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
 
             <select
               onChange={(e) => {
-                const preset = SOUND_PRESETS.find(p => p.name === e.target.value);
-                if (preset) loadPreset(preset);
-              }}
-              className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
-            >
-              <option value="">Load Sound Preset</option>
-              {SOUND_PRESETS.map(preset => (
-                <option key={preset.name} value={preset.name}>{preset.name}</option>
-              ))}
-            </select>
-
-            <select
-              onChange={(e) => {
                 const pattern = BASS_PATTERNS.find(p => p.name === e.target.value);
                 if (pattern) loadPattern(pattern);
                 e.target.value = '';
@@ -662,14 +289,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
 
       {!isCollapsed && (
         <>
-          <div 
-            ref={scrollContainerRef}
-            className="overflow-x-auto pb-4 relative"
-            style={{
-              scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(220, 38, 38, 0.3) rgba(0, 0, 0, 0.3)'
-            }}
-          >
+          <div className="overflow-x-auto pb-4 relative">
             <div 
               className="inline-flex gap-1 min-w-full" 
               style={{ 
@@ -682,7 +302,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
                   {Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes.map((note, noteIndex) => (
                     <button
                       key={`${stepIndex}-${noteIndex}`}
-                      onClick={() => toggleNote(stepIndex, noteIndex)}
+                      onClick={() => toggleStep(stepIndex, noteIndex)}
                       className={`
                         w-10 h-12 border transition-colors relative
                         ${stepIndex === currentStep ? 'border-red-500' : 'border-red-500/40'}
@@ -867,28 +487,10 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
           </div>
         </>
       )}
-
-      <style jsx>{`
-        .overflow-x-auto::-webkit-scrollbar {
-          height: 8px;
-        }
-
-        .overflow-x-auto::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.3);
-          border-radius: 4px;
-        }
-
-        .overflow-x-auto::-webkit-scrollbar-thumb {
-          background: rgba(220, 38, 38, 0.3);
-          border-radius: 4px;
-        }
-
-        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
-          background: rgba(220, 38, 38, 0.5);
-        }
-      `}</style>
     </div>
   );
 });
+
+BassTrack.displayName = 'BassTrack';
 
 export default BassTrack;
