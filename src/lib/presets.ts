@@ -5,29 +5,22 @@ export interface Preset {
   name: string;
   user_id: string;
   created_at: string;
-  parameters: {
-    filterFreq: number;
-    filterRes: number;
-    distortion: number;
-    distortionMix: number;
-    pareidoliaIntensity: number;
-    chaosLevel: number;
-    dreamDepth: number;
-    styleInfluence: number;
-    styleBlend: number;
-    selectedStyles: string[];
-    pitchShift: number;
-    pitchMix: number;
-    reverbDecay: number;
-    reverbMix: number;
-    midiMappings?: Record<number, string>;
-  };
+  parameters: any;
 }
 
 export async function savePreset(name: string, parameters: Preset['parameters']): Promise<Preset | null> {
   try {
-    const user = await supabase.auth.getUser();
-    if (!user.data.user) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      // Try to refresh the session
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !session?.user) {
+        throw new Error('Session expired. Please sign in again.');
+      }
+    }
+
+    if (!user) {
       throw new Error('User not authenticated');
     }
 
@@ -37,7 +30,7 @@ export async function savePreset(name: string, parameters: Preset['parameters'])
         {
           name,
           parameters,
-          user_id: user.data.user.id
+          user_id: user.id
         }
       ])
       .select()
@@ -57,15 +50,24 @@ export async function savePreset(name: string, parameters: Preset['parameters'])
 
 export async function loadPresets(): Promise<Preset[]> {
   try {
-    const user = await supabase.auth.getUser();
-    if (!user.data.user) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      // Try to refresh the session
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !session?.user) {
+        throw new Error('Session expired. Please sign in again.');
+      }
+    }
+
+    if (!user) {
       throw new Error('User not authenticated');
     }
 
     const { data, error } = await supabase
       .from('presets')
       .select('*')
-      .eq('user_id', user.data.user.id)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -82,8 +84,17 @@ export async function loadPresets(): Promise<Preset[]> {
 
 export async function deletePreset(id: string): Promise<boolean> {
   try {
-    const user = await supabase.auth.getUser();
-    if (!user.data.user) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      // Try to refresh the session
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !session?.user) {
+        throw new Error('Session expired. Please sign in again.');
+      }
+    }
+
+    if (!user) {
       throw new Error('User not authenticated');
     }
 
@@ -91,7 +102,7 @@ export async function deletePreset(id: string): Promise<boolean> {
       .from('presets')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.data.user.id);
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Error deleting preset:', error);
@@ -107,8 +118,17 @@ export async function deletePreset(id: string): Promise<boolean> {
 
 export async function updatePreset(id: string, parameters: Preset['parameters']): Promise<Preset | null> {
   try {
-    const user = await supabase.auth.getUser();
-    if (!user.data.user) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      // Try to refresh the session
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !session?.user) {
+        throw new Error('Session expired. Please sign in again.');
+      }
+    }
+
+    if (!user) {
       throw new Error('User not authenticated');
     }
 
@@ -116,7 +136,7 @@ export async function updatePreset(id: string, parameters: Preset['parameters'])
       .from('presets')
       .update({ parameters })
       .eq('id', id)
-      .eq('user_id', user.data.user.id)
+      .eq('user_id', user.id)
       .select()
       .single();
 
