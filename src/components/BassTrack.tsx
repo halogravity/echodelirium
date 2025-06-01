@@ -128,6 +128,61 @@ const BASS_PATTERNS: PatternPreset[] = [
       false
     ]),
     scale: { rootNote: 'C', octave: 2, selectedScale: 'minor' }
+  },
+  {
+    name: "Jungle Roller",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i === 0 || i === 7 || i === 11,
+      i === 3 || i === 14,
+      i === 6 || i === 13,
+      i === 9,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 2, selectedScale: 'minor' }
+  },
+  {
+    name: "Garage Skip",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 8 === 0,
+      i % 8 === 2,
+      i % 8 === 5,
+      i % 16 === 11,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 2, selectedScale: 'dorian' }
+  },
+  {
+    name: "Trap 808",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i === 0 || i === 7,
+      i === 3 || i === 11,
+      i === 4,
+      i === 12,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 1, selectedScale: 'minor' }
+  },
+  {
+    name: "IDM Glitch",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 5 === 0,
+      i % 7 === 0,
+      i % 3 === 0,
+      i % 11 === 0,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 3, selectedScale: 'lydian' }
+  },
+  {
+    name: "Drone Pulse",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 16 === 0,
+      i % 16 === 8,
+      i % 16 === 12,
+      i % 16 === 14,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 1, selectedScale: 'phrygian' }
   }
 ];
 
