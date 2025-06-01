@@ -7,6 +7,7 @@ import Knob from './Knob';
 interface BassTrackProps {
   currentStep: number;
   stepAmount: number;
+  onStepAmountChange?: (steps: number) => void;
 }
 
 export interface BassTrackRef {
@@ -83,6 +84,50 @@ const BASS_PATTERNS: PatternPreset[] = [
       false
     ]),
     scale: { rootNote: 'C', octave: 2, selectedScale: 'phrygian' }
+  },
+  {
+    name: "Funk Groove",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 4 === 0,
+      i % 4 === 2,
+      i % 8 === 6,
+      i % 8 === 7,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 2, selectedScale: 'dorian' }
+  },
+  {
+    name: "Dark Ambient",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i === 0 || i === 8,
+      i === 4 || i === 12,
+      i === 6 || i === 14,
+      false,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 1, selectedScale: 'locrian' }
+  },
+  {
+    name: "Minimal Tech",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 4 === 0,
+      i % 8 === 3,
+      i % 8 === 5,
+      i % 16 === 14,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 2, selectedScale: 'phrygian' }
+  },
+  {
+    name: "Breakbeat Bass",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i === 0 || i === 6 || i === 10,
+      i === 4 || i === 12,
+      i === 8 || i === 14,
+      false,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 2, selectedScale: 'minor' }
   }
 ];
 
@@ -206,10 +251,70 @@ const SOUND_PRESETS = [
       filterFreq: 1500,
       filterQ: 5
     }
+  },
+  {
+    name: "Techno Sub",
+    settings: {
+      oscillatorType: "sine",
+      attack: 0.03,
+      decay: 0.5,
+      sustain: 0.8,
+      release: 0.4,
+      filterFreq: 150,
+      filterQ: 2
+    }
+  },
+  {
+    name: "Dub Wobble",
+    settings: {
+      oscillatorType: "triangle",
+      attack: 0.08,
+      decay: 0.7,
+      sustain: 0.6,
+      release: 0.8,
+      filterFreq: 250,
+      filterQ: 8
+    }
+  },
+  {
+    name: "Future Bass",
+    settings: {
+      oscillatorType: "sawtooth",
+      attack: 0.04,
+      decay: 0.3,
+      sustain: 0.7,
+      release: 0.5,
+      filterFreq: 800,
+      filterQ: 4
+    }
+  },
+  {
+    name: "Minimal Thump",
+    settings: {
+      oscillatorType: "sine",
+      attack: 0.01,
+      decay: 0.2,
+      sustain: 0.4,
+      release: 0.3,
+      filterFreq: 180,
+      filterQ: 1.2
+    }
+  },
+  {
+    name: "Neuro Bass",
+    settings: {
+      oscillatorType: "sawtooth",
+      attack: 0.02,
+      decay: 0.4,
+      sustain: 0.6,
+      release: 0.4,
+      filterFreq: 500,
+      filterQ: 12
+    }
   }
 ];
 
-const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepAmount }, ref) => {
+const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepAmount, onStepAmountChange }, ref) => {
   const synthRef = useRef<Tone.MonoSynth | null>(null);
   const currentNoteRef = useRef<string | null>(null);
   const patternRef = useRef<boolean[][]>([]);
@@ -419,28 +524,6 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
     }));
   };
 
-  const savePattern = () => {
-    if (!newPatternName.trim()) return;
-
-    const newPattern: PatternPreset = {
-      name: newPatternName,
-      pattern,
-      scale: {
-        rootNote: params.rootNote,
-        octave: params.octave,
-        selectedScale: params.selectedScale
-      }
-    };
-
-    setSavedPatterns(prev => [...prev, newPattern]);
-    setNewPatternName('');
-    setShowSaveDialog(false);
-  };
-
-  const deletePattern = (index: number) => {
-    setSavedPatterns(prev => prev.filter((_, i) => i !== index));
-  };
-
   const handleStepAmountChange = (steps: number) => {
     setLocalStepAmount(steps as StepAmount);
     const newPattern = Array(steps).fill(null).map((_, stepIndex) => {
@@ -450,6 +533,11 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
       return Array(Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes.length).fill(false);
     });
     setPattern(newPattern);
+
+    // Notify parent of step amount change
+    if (onStepAmountChange) {
+      onStepAmountChange(steps);
+    }
   };
 
   return (
@@ -513,38 +601,12 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
                 <option key={pattern.name} value={pattern.name}>{pattern.name}</option>
               ))}
             </select>
-
-            <button
-              onClick={() => setShowSaveDialog(true)}
-              className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
-            >
-              <Save className="w-4 h-4" />
-              Save Pattern
-            </button>
           </div>
         )}
       </div>
 
       {!isCollapsed && (
         <>
-          {showSaveDialog && (
-            <div className="mb-4 flex items-center gap-2 bg-black/40 p-3 border border-red-900/20">
-              <input
-                type="text"
-                value={newPatternName}
-                onChange={(e) => setNewPatternName(e.target.value)}
-                placeholder="Pattern name..."
-                className="flex-1 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
-              />
-              <button
-                onClick={savePattern}
-                className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
-              >
-                Save
-              </button>
-            </div>
-          )}
-
           <div 
             ref={scrollContainerRef}
             className="overflow-x-auto pb-4 relative"
