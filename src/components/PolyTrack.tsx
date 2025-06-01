@@ -103,6 +103,78 @@ const POLY_PATTERNS: PatternPreset[] = [
     ]),
     scale: { rootNote: 'C', octave: 3, selectedScale: 'phrygian' },
     chordProgression: ['Cm', 'Ab', 'Fm', 'G']
+  },
+  {
+    name: "Dreamy Sequence",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 6 === 0,
+      i % 6 === 2,
+      i % 6 === 4,
+      i % 12 === 8,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 4, selectedScale: 'mixolydian' },
+    chordProgression: ['Cmaj7', 'Em7', 'Am7', 'G7sus4']
+  },
+  {
+    name: "Mystical Drone",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i === 0 || i === 15,
+      i === 4 || i === 11,
+      i === 7 || i === 13,
+      i === 9,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 3, selectedScale: 'harmonic minor' },
+    chordProgression: ['Cm', 'G7b13', 'Ab+', 'E7b9']
+  },
+  {
+    name: "Future Pop",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 3 === 0,
+      i % 4 === 1,
+      i % 5 === 2,
+      i % 7 === 3,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 4, selectedScale: 'major' },
+    chordProgression: ['Cmaj9', 'Am11', 'Fmaj13', 'G13']
+  },
+  {
+    name: "Quantum Field",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 7 === 0,
+      i % 5 === 2,
+      i % 3 === 1,
+      i % 11 === 4,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 4, selectedScale: 'whole tone' },
+    chordProgression: ['C7#11', 'Eb7#11', 'F#7#11', 'A7#11']
+  },
+  {
+    name: "Spectral Waves",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 8 === 0 || i % 8 === 3,
+      i % 8 === 2 || i % 8 === 5,
+      i % 8 === 4 || i % 8 === 7,
+      i % 16 === 6,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 4, selectedScale: 'melodic minor' },
+    chordProgression: ['CmMaj7', 'Dm7b5', 'G7alt', 'AbMaj7#11']
+  },
+  {
+    name: "Neural Dance",
+    pattern: Array(16).fill(null).map((_, i) => [
+      i % 4 === 0 || i % 4 === 2,
+      i % 8 === 1 || i % 8 === 5,
+      i % 6 === 3,
+      i % 12 === 7,
+      false
+    ]),
+    scale: { rootNote: 'C', octave: 4, selectedScale: 'altered' },
+    chordProgression: ['C7alt', 'F#7alt', 'B7alt', 'E7alt']
   }
 ];
 
@@ -225,6 +297,66 @@ const SOUND_PRESETS = [
       release: 3.5,
       filterFreq: 2000,
       filterQ: 8
+    }
+  },
+  {
+    name: "Spectral Mist",
+    settings: {
+      oscillatorType: "sine",
+      attack: 3.0,
+      decay: 2.0,
+      sustain: 0.7,
+      release: 5.0,
+      filterFreq: 1200,
+      filterQ: 4
+    }
+  },
+  {
+    name: "Neural Pulse",
+    settings: {
+      oscillatorType: "square",
+      attack: 0.05,
+      decay: 0.2,
+      sustain: 0.8,
+      release: 0.8,
+      filterFreq: 5000,
+      filterQ: 10
+    }
+  },
+  {
+    name: "Void Resonance",
+    settings: {
+      oscillatorType: "triangle",
+      attack: 4.0,
+      decay: 3.0,
+      sustain: 0.9,
+      release: 6.0,
+      filterFreq: 800,
+      filterQ: 3
+    }
+  },
+  {
+    name: "Holographic Strings",
+    settings: {
+      oscillatorType: "sawtooth",
+      attack: 0.4,
+      decay: 0.6,
+      sustain: 0.7,
+      release: 1.2,
+      filterFreq: 3000,
+      filterQ: 5
+    }
+  },
+  {
+    name: "Quantum Chorus",
+    settings: {
+      oscillatorType: "sine",
+      attack: 0.8,
+      decay: 1.0,
+      sustain: 0.8,
+      release: 2.0,
+      filterFreq: 2800,
+      filterQ: 6
     }
   }
 ];
@@ -614,7 +746,7 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({ currentStep, stepA
                   onChange={(e) => setParams(prev => ({ ...prev, selectedScale: e.target.value }))}
                   className="w-full bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
                 >
-                  {['major', 'minor', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'locrian'].map(scale => (
+                  {['major', 'minor', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'locrian', 'harmonic minor', 'melodic minor', 'whole tone', 'altered'].map(scale => (
                     <option key={scale} value={scale}>
                       {scale.charAt(0).toUpperCase() + scale.slice(1)}
                     </option>
