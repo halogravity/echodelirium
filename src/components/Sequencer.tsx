@@ -16,7 +16,7 @@ interface Track {
   ref: React.RefObject<DrumTrackRef | BassTrackRef | PolyTrackRef>;
   defaultSamplePath?: string;
   name?: string;
-  stepAmount?: number; // Add stepAmount to track individual track lengths
+  stepAmount?: number;
 }
 
 const Sequencer: React.FC = () => {
@@ -86,12 +86,13 @@ const Sequencer: React.FC = () => {
           setTimeout(() => {
             // For drum tracks, use their individual step count if set
             const trackStepAmount = track.stepAmount || stepAmount;
-            const trackStep = track.type === 'drum' ? step % trackStepAmount : step % stepAmount;
+            const trackStep = step % trackStepAmount;
             track.ref.current?.playStep(trackStep);
           }, swingOffset);
         }
       });
 
+      // Increment global step counter
       setCurrentStep(prev => (prev + 1) % stepAmount);
       currentStepRef.current = (currentStepRef.current + 1) % stepAmount;
     }, stepTime);
@@ -118,6 +119,15 @@ const Sequencer: React.FC = () => {
     setStepAmount(steps as StepAmount);
   };
 
+  // Handle individual track step amount changes
+  const handleTrackStepAmountChange = (trackId: string, steps: number) => {
+    setTracks(prev => prev.map(track => 
+      track.id === trackId 
+        ? { ...track, stepAmount: steps }
+        : track
+    ));
+  };
+
   const addTrack = (type: Track['type']) => {
     const newTrack: Track = {
       id: `${type}-${Date.now()}`,
@@ -126,15 +136,6 @@ const Sequencer: React.FC = () => {
       name: type === 'drum' ? 'Drum' : type === 'bass' ? 'Bass Synth' : 'Poly Synth'
     };
     setTracks(prev => [...prev, newTrack]);
-  };
-
-  // Handle individual track step amount changes
-  const handleTrackStepAmountChange = (trackId: string, steps: number) => {
-    setTracks(prev => prev.map(track => 
-      track.id === trackId 
-        ? { ...track, stepAmount: steps }
-        : track
-    ));
   };
 
   return (
