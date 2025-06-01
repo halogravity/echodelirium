@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { Slider } from 'lucide-react';
+import { Sliders as Slider } from 'lucide-react';
 
 // Update the interface to include onStepAmountChange
 interface PolyTrackProps {
