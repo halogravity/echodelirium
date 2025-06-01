@@ -115,6 +115,14 @@ const Sequencer: React.FC = () => {
       return;
     }
 
+    // Initialize all tracks
+    tracks.forEach(track => {
+      if (track.ref.current) {
+        // Reset track state
+        track.ref.current.stop();
+      }
+    });
+
     setIsPlaying(true);
     setTracks(prev => prev.map(track => ({
       ...track,
@@ -134,13 +142,17 @@ const Sequencer: React.FC = () => {
       animationFrameRef.current = null;
     }
     
-    // Reset all track steps and stop any playing notes
-    setTracks(prev => prev.map(track => {
+    // Stop all tracks and reset their state
+    tracks.forEach(track => {
       if (track.ref.current) {
         track.ref.current.stop();
       }
-      return { ...track, currentStep: 0 };
-    }));
+    });
+
+    setTracks(prev => prev.map(track => ({
+      ...track,
+      currentStep: 0
+    })));
   };
 
   const syncAllBpms = () => {
@@ -155,6 +167,12 @@ const Sequencer: React.FC = () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      // Stop all tracks when component unmounts
+      tracks.forEach(track => {
+        if (track.ref.current) {
+          track.ref.current.stop();
+        }
+      });
     };
   }, []);
 
@@ -182,7 +200,7 @@ const Sequencer: React.FC = () => {
       name: type === 'drum' ? 'Drum' : type === 'bass' ? 'Bass Synth' : 'Poly Synth',
       stepAmount: 16,
       currentStep: 0,
-      bpm: 120,
+      bpm: masterBpm,
       lastStepTime: performance.now()
     };
     setTracks(prev => [...prev, newTrack]);
