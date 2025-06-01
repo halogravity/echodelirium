@@ -89,7 +89,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [localStepAmount, setLocalStepAmount] = useState<StepAmount>(stepAmount as StepAmount);
   const [params, setParams] = useState(() => ({ ...DEFAULT_PARAMS }));
-  const [presets, setPresets] = useState<Preset[]>([]);
+  const [presets, setPresets] = useState<any[]>([]);
   const [isLoadingPresets, setIsLoadingPresets] = useState(false);
   const [isSavingPreset, setIsSavingPreset] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
@@ -237,19 +237,27 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
     }
   };
 
-  const handleLoadPreset = (preset: Preset) => {
+  const handleLoadPreset = (preset: any) => {
     try {
-      const presetData = preset.parameters as any;
+      const presetData = preset.parameters;
       if (presetData.pattern) {
-        setPattern(presetData.pattern);
+        const newPattern = Array(localStepAmount).fill(null).map((_, i) => {
+          if (i < presetData.pattern.length) {
+            return [...presetData.pattern[i]];
+          }
+          return Array(5).fill(false);
+        });
+        setPattern(newPattern);
       }
+      
       if (presetData.params) {
-        setParams(prev => ({
+        setParams({
           ...DEFAULT_PARAMS,
           ...presetData.params
-        }));
+        });
       }
-      if (presetData.stepAmount) {
+      
+      if (presetData.stepAmount && STEP_OPTIONS.includes(presetData.stepAmount)) {
         handleStepAmountChange(presetData.stepAmount);
       }
     } catch (error) {
