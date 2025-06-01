@@ -107,6 +107,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
   const synthRef = useRef<any>(null);
   const currentNoteRef = useRef<string | null>(null);
   const patternRef = useRef(pattern);
+  const lastStepRef = useRef<number>(-1);
 
   useEffect(() => {
     loadUserPresets();
@@ -181,6 +182,12 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
     playStep: (step: number, time?: number) => {
       if (!synthRef.current || step >= patternRef.current.length) return;
 
+      // Only trigger release if we're on a different step
+      if (lastStepRef.current !== step && currentNoteRef.current) {
+        synthRef.current.triggerRelease(time);
+        currentNoteRef.current = null;
+      }
+
       const scaleNotes = Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes;
       const stepPattern = patternRef.current[step];
       const activeNotes = stepPattern
@@ -190,20 +197,18 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
       if (activeNotes.length > 0) {
         const now = time || synthRef.current.now();
         const note = activeNotes[0];
-        
-        if (currentNoteRef.current) {
-          synthRef.current.triggerRelease(now);
-        }
-
         synthRef.current.triggerAttack(note, now);
         currentNoteRef.current = note;
       }
+
+      lastStepRef.current = step;
     },
     stop: () => {
       if (synthRef.current && currentNoteRef.current) {
         synthRef.current.triggerRelease();
         currentNoteRef.current = null;
       }
+      lastStepRef.current = -1;
     }
   }), [params.rootNote, params.octave, params.selectedScale]);
 
