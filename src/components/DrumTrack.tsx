@@ -57,6 +57,8 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
   const [localStepAmount, setLocalStepAmount] = useState<StepAmount>(stepAmount as StepAmount);
   const soundRef = useRef<Howl | null>(null);
   const patternRef = useRef(pattern);
+  const lastStepRef = useRef<number>(-1);
+  const isPlayingRef = useRef(false);
 
   useEffect(() => {
     loadSamples();
@@ -81,7 +83,6 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
     try {
       setIsLoading(true);
       
-      // Load user samples
       const { data: userSamplesData, error: userError } = await supabase
         .from('samples')
         .select('*')
@@ -100,7 +101,6 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
     try {
       let audioUrl = path;
 
-      // If not a local sample path, get signed URL from Supabase
       if (!path.startsWith('/samples/')) {
         const { data: { signedUrl }, error } = await supabase.storage
           .from('echobucket')
@@ -113,6 +113,9 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
       }
 
       const sound = await AudioLoader.loadAudio(audioUrl);
+      if (soundRef.current) {
+        soundRef.current.unload();
+      }
       soundRef.current = sound;
       sound.volume(Math.pow(10, volume / 20));
       sound.stereo(pan);
@@ -180,26 +183,36 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
   useImperativeHandle(ref, () => ({
     getCurrentNotes: () => [],
     stopCurrentNotes: () => {
-      if (soundRef.current) {
+      if (soundRef.current && isPlayingRef.current) {
         soundRef.current.stop();
+        isPlayingRef.current = false;
       }
     },
     playStep: (step: number, time?: number) => {
-      if (step >= patternRef.current.length) return;
+      if (step >= patternRef.current.length || !soundRef.current) return;
       
-      if (patternRef.current[step] && soundRef.current) {
-        if (time !== undefined) {
-          soundRef.current.seek(0);
-          soundRef.current.play();
-        } else {
-          soundRef.current.play();
+      // Only play if this is a new step
+      if (lastStepRef.current !== step) {
+        if (isPlayingRef.current) {
+          soundRef.current.stop();
         }
+        
+        if (patternRef.current[step]) {
+          soundRef.current.play();
+          isPlayingRef.current = true;
+        } else {
+          isPlayingRef.current = false;
+        }
+        
+        lastStepRef.current = step;
       }
     },
     stop: () => {
       if (soundRef.current) {
         soundRef.current.stop();
+        isPlayingRef.current = false;
       }
+      lastStepRef.current = -1;
     }
   }), []);
 
@@ -229,7 +242,6 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
     const newStepAmount = steps as StepAmount;
     setLocalStepAmount(newStepAmount);
     
-    // Update pattern length while preserving existing steps
     setPattern(prev => {
       const newPattern = Array(newStepAmount).fill(false);
       prev.forEach((step, i) => {
@@ -240,7 +252,6 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
       return newPattern;
     });
 
-    // Notify parent of step amount change
     if (onStepAmountChange) {
       onStepAmountChange(steps);
     }
@@ -392,5 +403,7 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
     </div>
   );
 });
+
+DrumTrack.displayName = 'DrumTrack';
 
 export default DrumTrack;
