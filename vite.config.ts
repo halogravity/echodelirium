@@ -22,4 +22,10 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    force: true,
+    hmr: {
+      overlay: false
+    }
+  }
 });
