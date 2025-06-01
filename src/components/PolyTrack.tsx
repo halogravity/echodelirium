@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } f
 import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Zap } from 'lucide-react';
 import { Scale } from 'tonal';
 import Knob from './Knob';
+import { savePreset, loadPresets, Preset } from '../lib/presets';
 
 interface PolyTrackProps {
   currentStep: number;
@@ -85,10 +86,68 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
     filterQ: 2,
     oscillatorType: "sine" as OscillatorType
   }));
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [isLoadingPresets, setIsLoadingPresets] = useState(false);
+  const [isSavingPreset, setIsSavingPreset] = useState(false);
+  const [newPresetName, setNewPresetName] = useState('');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   const synthRef = useRef<any>(null);
   const currentNotesRef = useRef<string[]>([]);
   const patternRef = useRef(pattern);
+
+  useEffect(() => {
+    loadUserPresets();
+  }, []);
+
+  const loadUserPresets = async () => {
+    setIsLoadingPresets(true);
+    try {
+      const userPresets = await loadPresets();
+      setPresets(userPresets);
+    } catch (error) {
+      console.error('Error loading presets:', error);
+    } finally {
+      setIsLoadingPresets(false);
+    }
+  };
+
+  const handleSavePreset = async () => {
+    if (!newPresetName.trim()) return;
+
+    setIsSavingPreset(true);
+    try {
+      const presetData = {
+        pattern,
+        params,
+        stepAmount: localStepAmount
+      };
+
+      const savedPreset = await savePreset(newPresetName, presetData);
+      if (savedPreset) {
+        setPresets(prev => [savedPreset, ...prev]);
+        setShowSaveDialog(false);
+        setNewPresetName('');
+      }
+    } catch (error) {
+      console.error('Error saving preset:', error);
+    } finally {
+      setIsSavingPreset(false);
+    }
+  };
+
+  const handleLoadPreset = (preset: Preset) => {
+    try {
+      const presetData = preset.parameters as any;
+      setPattern(presetData.pattern);
+      setParams(presetData.params);
+      if (presetData.stepAmount) {
+        handleStepAmountChange(presetData.stepAmount);
+      }
+    } catch (error) {
+      console.error('Error loading preset:', error);
+    }
+  };
 
   useEffect(() => {
     patternRef.current = pattern;
@@ -210,22 +269,72 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
               </select>
             </div>
 
-            <select
-              onChange={(e) => {
-                const pattern = POLY_PATTERNS.find(p => p.name === e.target.value);
-                if (pattern) loadPattern(pattern);
-                e.target.value = '';
-              }}
-              className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
-            >
-              <option value="">Load Pattern</option>
-              {POLY_PATTERNS.map(pattern => (
-                <option key={pattern.name} value={pattern.name}>{pattern.name}</option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                onChange={(e) => {
+                  if (e.target.value === 'save') {
+                    setShowSaveDialog(true);
+                  } else {
+                    const preset = presets.find(p => p.id === e.target.value);
+                    if (preset) handleLoadPreset(preset);
+                  }
+                  e.target.value = '';
+                }}
+                className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
+                disabled={isLoadingPresets}
+              >
+                <option value="">User Presets</option>
+                <option value="save">Save Current...</option>
+                {presets.map(preset => (
+                  <option key={preset.id} value={preset.id}>{preset.name}</option>
+                ))}
+              </select>
+
+              <select
+                onChange={(e) => {
+                  const pattern = POLY_PATTERNS.find(p => p.name === e.target.value);
+                  if (pattern) loadPattern(pattern);
+                  e.target.value = '';
+                }}
+                className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
+              >
+                <option value="">Load Pattern</option>
+                {POLY_PATTERNS.map(pattern => (
+                  <option key={pattern.name} value={pattern.name}>{pattern.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
       </div>
+
+      {showSaveDialog && (
+        <div className="mb-4 flex items-center gap-2">
+          <input
+            type="text"
+            value={newPresetName}
+            onChange={(e) => setNewPresetName(e.target.value)}
+            placeholder="Preset name..."
+            className="flex-1 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
+          />
+          <button
+            onClick={handleSavePreset}
+            disabled={isSavingPreset || !newPresetName.trim()}
+            className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40 disabled:opacity-50"
+          >
+            {isSavingPreset ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            onClick={() => {
+              setShowSaveDialog(false);
+              setNewPresetName('');
+            }}
+            className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
 
       {!isCollapsed && (
         <>
