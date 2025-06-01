@@ -47,7 +47,7 @@ const NeuralVisualizer: React.FC<NeuralVisualizerProps> = ({
 
       const centerY = displayHeight / 2;
 
-      if (audioData && isPlaying) {
+      if (audioData) {
         // Draw neural network visualization
         const sliceWidth = displayWidth / audioData.length;
         const scale = displayHeight / 2 * 0.9;
@@ -212,7 +212,7 @@ const NeuralVisualizer: React.FC<NeuralVisualizerProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [audioData, intensity, chaos, dreamDepth, isPlaying]);
+  }, [audioData, intensity, chaos, dreamDepth]);
 
   return (
     <div className="bg-black/40 p-4 lg:p-6 border border-red-900/20">
@@ -224,9 +224,9 @@ const NeuralVisualizer: React.FC<NeuralVisualizerProps> = ({
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Activity className={`w-4 h-4 ${isPlaying ? 'text-red-500 animate-pulse' : 'text-red-900'}`} />
+            <Activity className={`w-4 h-4 ${audioData ? 'text-red-500 animate-pulse' : 'text-red-900'}`} />
             <span className="text-xs font-mono text-red-500/70">
-              {isPlaying ? 'ACTIVE' : 'DORMANT'}
+              {audioData ? 'ACTIVE' : 'DORMANT'}
             </span>
           </div>
           <div className="text-xs font-mono text-red-500/50">
@@ -239,7 +239,6 @@ const NeuralVisualizer: React.FC<NeuralVisualizerProps> = ({
       </div>
       
       <div className="relative h-[200px]">
-        {/* CRT screen effect */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent mix-blend-overlay" />
           <div className="absolute inset-0 bg-red-500/5 mix-blend-overlay" />
@@ -250,13 +249,8 @@ const NeuralVisualizer: React.FC<NeuralVisualizerProps> = ({
           className="w-full h-full bg-black rounded-lg"
         />
 
-        {/* Scan line overlay */}
         <div className="absolute inset-0 pointer-events-none bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.1)_0px,rgba(0,0,0,0.1)_1px,transparent_1px,transparent_2px)]" />
-        
-        {/* Screen reflection */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/5 to-transparent" />
-        
-        {/* Screen corners */}
         <div className="absolute inset-0 pointer-events-none rounded-lg border border-red-900/20" />
       </div>
     </div>
