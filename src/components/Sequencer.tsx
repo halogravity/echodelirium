@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Square, Settings, Music2, Volume2, Clock, Plus } from 'lucide-react';
+import * as Tone from 'tone';
 import DrumTrack from './DrumTrack';
 import BassTrack from './BassTrack';
 import PolyTrack from './PolyTrack';
@@ -59,46 +60,60 @@ const Sequencer: React.FC = () => {
     }
   ]);
 
-  const intervalRef = useRef<number | null>(null);
+  // Store the Transport event ID for cleanup
+  const transportEventRef = useRef<number | null>(null);
 
-  const startSequencer = () => {
+  // Update Tone.Transport whenever BPM changes
+  useEffect(() => {
+    Tone.Transport.bpm.value = bpm;
+  }, [bpm]);
+
+  // Update Tone.Transport whenever swing changes
+  useEffect(() => {
+    Tone.Transport.swing = swing;
+  }, [swing]);
+
+  const startSequencer = async () => {
     if (isPlaying) {
       stopSequencer();
       return;
     }
 
+    // Ensure audio context is started
+    await Tone.start();
+    
     setIsPlaying(true);
     setTracks(prev => prev.map(track => ({ ...track, currentStep: 0 })));
 
-    const stepTime = (60 / bpm) * 1000 / 4; // 16th notes
-    intervalRef.current = window.setInterval(() => {
+    // Schedule track updates using Tone.Transport
+    const stepTime = '16n'; // 16th notes
+    transportEventRef.current = Tone.Transport.scheduleRepeat((time) => {
       setTracks(prev => prev.map(track => {
-        // Calculate swing offset based on whether it's an even or odd step
-        const isEvenStep = track.currentStep % 2 === 0;
-        const swingOffset = isEvenStep ? 0 : (stepTime * swing * 0.5);
-
-        // Schedule track to play with swing offset
-        setTimeout(() => {
-          if (track.ref.current) {
-            track.ref.current.playStep(track.currentStep);
-          }
-        }, swingOffset);
-
-        // Increment step counter for this track independently
+        if (track.ref.current) {
+          track.ref.current.playStep(track.currentStep, time);
+        }
         return {
           ...track,
           currentStep: (track.currentStep + 1) % track.stepAmount
         };
       }));
     }, stepTime);
+
+    // Start the transport
+    Tone.Transport.start();
   };
 
   const stopSequencer = () => {
     setIsPlaying(false);
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    
+    // Clear the transport event
+    if (transportEventRef.current !== null) {
+      Tone.Transport.clear(transportEventRef.current);
+      transportEventRef.current = null;
     }
+    
+    // Stop the transport
+    Tone.Transport.stop();
     
     // Reset all track steps and stop any playing notes
     setTracks(prev => prev.map(track => {
@@ -108,6 +123,16 @@ const Sequencer: React.FC = () => {
       return { ...track, currentStep: 0 };
     }));
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (transportEventRef.current !== null) {
+        Tone.Transport.clear(transportEventRef.current);
+      }
+      Tone.Transport.stop();
+    };
+  }, []);
 
   // Handle individual track step amount changes
   const handleTrackStepAmountChange = (trackId: string, steps: number) => {
