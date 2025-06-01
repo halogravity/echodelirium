@@ -37,7 +37,7 @@ const DEFAULT_PARAMS = {
   selectedScale: 'major',
   attack: 0.01,
   decay: 0.3,
-  sustain: 0.4, // Set to 40%
+  sustain: 0.4,
   release: 0.2,
   filterFreq: 800,
   filterQ: 2,
@@ -109,12 +109,12 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
   const currentNoteRef = useRef<string | null>(null);
   const patternRef = useRef(pattern);
   const lastStepRef = useRef<number>(-1);
+  const lastTriggerTimeRef = useRef<number>(0);
 
   useEffect(() => {
     loadUserPresets();
   }, []);
 
-  // Initialize synth
   useEffect(() => {
     const synth = new Tone.MonoSynth({
       oscillator: {
@@ -140,7 +140,6 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
     };
   }, []);
 
-  // Update synth parameters when they change
   useEffect(() => {
     if (synthRef.current) {
       synthRef.current.set({
@@ -158,6 +157,59 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
       });
     }
   }, [params]);
+
+  useEffect(() => {
+    patternRef.current = pattern;
+  }, [pattern]);
+
+  useImperativeHandle(ref, () => ({
+    getCurrentNote: () => currentNoteRef.current,
+    stopCurrentNotes: () => {
+      if (synthRef.current && currentNoteRef.current) {
+        synthRef.current.triggerRelease();
+        currentNoteRef.current = null;
+      }
+    },
+    playStep: (step: number, time?: number) => {
+      if (!synthRef.current || step >= patternRef.current.length) return;
+
+      const now = time || Tone.now();
+      
+      // Ensure minimum time between triggers to prevent overlapping
+      if (now <= lastTriggerTimeRef.current) {
+        now = lastTriggerTimeRef.current + 0.01;
+      }
+
+      // Always release the previous note before triggering a new one
+      if (currentNoteRef.current) {
+        synthRef.current.triggerRelease(now);
+        currentNoteRef.current = null;
+      }
+
+      const scaleNotes = Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes;
+      const stepPattern = patternRef.current[step];
+      const activeNotes = stepPattern
+        .map((isActive, index) => isActive ? scaleNotes[index] : null)
+        .filter(Boolean) as string[];
+
+      if (activeNotes.length > 0) {
+        const note = activeNotes[0];
+        synthRef.current.triggerAttack(note, now);
+        currentNoteRef.current = note;
+        lastTriggerTimeRef.current = now;
+      }
+
+      lastStepRef.current = step;
+    },
+    stop: () => {
+      if (synthRef.current && currentNoteRef.current) {
+        synthRef.current.triggerRelease();
+        currentNoteRef.current = null;
+      }
+      lastStepRef.current = -1;
+      lastTriggerTimeRef.current = 0;
+    }
+  }), [params.rootNote, params.octave, params.selectedScale]);
 
   const loadUserPresets = async () => {
     setIsLoadingPresets(true);
@@ -208,55 +260,9 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
       }
     } catch (error) {
       console.error('Error loading preset:', error);
-      // Reset to default values if loading fails
       setParams({ ...DEFAULT_PARAMS });
     }
   };
-
-  useEffect(() => {
-    patternRef.current = pattern;
-  }, [pattern]);
-
-  useImperativeHandle(ref, () => ({
-    getCurrentNote: () => currentNoteRef.current,
-    stopCurrentNotes: () => {
-      if (synthRef.current && currentNoteRef.current) {
-        synthRef.current.triggerRelease();
-        currentNoteRef.current = null;
-      }
-    },
-    playStep: (step: number, time?: number) => {
-      if (!synthRef.current || step >= patternRef.current.length) return;
-
-      // Only trigger release if we're on a different step
-      if (lastStepRef.current !== step && currentNoteRef.current) {
-        synthRef.current.triggerRelease(time);
-        currentNoteRef.current = null;
-      }
-
-      const scaleNotes = Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes;
-      const stepPattern = patternRef.current[step];
-      const activeNotes = stepPattern
-        .map((isActive, index) => isActive ? scaleNotes[index] : null)
-        .filter(Boolean) as string[];
-
-      if (activeNotes.length > 0) {
-        const now = time || synthRef.current.now();
-        const note = activeNotes[0];
-        synthRef.current.triggerAttack(note, now);
-        currentNoteRef.current = note;
-      }
-
-      lastStepRef.current = step;
-    },
-    stop: () => {
-      if (synthRef.current && currentNoteRef.current) {
-        synthRef.current.triggerRelease();
-        currentNoteRef.current = null;
-      }
-      lastStepRef.current = -1;
-    }
-  }), [params.rootNote, params.octave, params.selectedScale]);
 
   const handleStepAmountChange = (steps: number) => {
     const newStepAmount = steps as StepAmount;
