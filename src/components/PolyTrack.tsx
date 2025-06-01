@@ -338,7 +338,63 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
 
       {!isCollapsed && (
         <>
-          <div className="grid grid-cols-3 gap-6 mb-6">
+          <div className="overflow-x-auto pb-4">
+            <div 
+              className="inline-flex gap-1 min-w-full" 
+              style={{ width: `max(100%, ${localStepAmount * 40}px)` }}
+            >
+              {pattern.map((step, stepIndex) => (
+                <div key={stepIndex} className="space-y-1">
+                  {Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes.map((note, noteIndex) => (
+                    <button
+                      key={`${stepIndex}-${noteIndex}`}
+                      onClick={() => toggleStep(stepIndex, noteIndex)}
+                      className={`
+                        w-10 h-12 border transition-colors relative
+                        ${stepIndex === currentStep ? 'border-red-500' : 'border-red-500/40'}
+                        ${step[noteIndex]
+                          ? 'bg-red-900/40 border-red-400/70' 
+                          : 'hover:border-red-400/70'
+                        }
+                        ${stepIndex % 4 === 0 ? 'border-l-2 border-l-red-500/60' : ''}
+                      `}
+                    >
+                      <span className="text-sm font-mono text-red-500/70 absolute inset-0 flex items-center justify-center">
+                        {note}
+                      </span>
+                    </button>
+                  ))}
+                  {stepIndex % 4 === 0 && (
+                    <div className="absolute -top-6 left-0 text-xs font-mono text-red-500/50">
+                      {stepIndex + 1}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-4 mt-4 mb-6">
+            <button
+              onClick={clearPattern}
+              className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
+            >
+              <Trash2 className="w-4 h-4 inline-block mr-2" />
+              Clear Pattern
+            </button>
+            <button
+              onClick={() => {
+                const randomPattern = POLY_PATTERNS[Math.floor(Math.random() * POLY_PATTERNS.length)];
+                loadPattern(randomPattern);
+              }}
+              className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
+            >
+              <Zap className="w-4 h-4 inline-block mr-2" />
+              Random Pattern
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-6 pt-6 border-t border-red-900/20">
             <div className="space-y-2">
               <div className="text-xs font-mono text-red-500/70">Scale</div>
               <div className="space-y-2">
@@ -474,62 +530,6 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <div 
-              className="inline-flex gap-1 min-w-full" 
-              style={{ width: `max(100%, ${localStepAmount * 40}px)` }}
-            >
-              {pattern.map((step, stepIndex) => (
-                <div key={stepIndex} className="space-y-1">
-                  {Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes.map((note, noteIndex) => (
-                    <button
-                      key={`${stepIndex}-${noteIndex}`}
-                      onClick={() => toggleStep(stepIndex, noteIndex)}
-                      className={`
-                        w-10 h-12 border transition-colors relative
-                        ${stepIndex === currentStep ? 'border-red-500' : 'border-red-500/40'}
-                        ${step[noteIndex]
-                          ? 'bg-red-900/40 border-red-400/70' 
-                          : 'hover:border-red-400/70'
-                        }
-                        ${stepIndex % 4 === 0 ? 'border-l-2 border-l-red-500/60' : ''}
-                      `}
-                    >
-                      <span className="text-sm font-mono text-red-500/70 absolute inset-0 flex items-center justify-center">
-                        {note}
-                      </span>
-                    </button>
-                  ))}
-                  {stepIndex % 4 === 0 && (
-                    <div className="absolute -top-6 left-0 text-xs font-mono text-red-500/50">
-                      {stepIndex + 1}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-center gap-4 mt-6">
-            <button
-              onClick={clearPattern}
-              className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
-            >
-              <Trash2 className="w-4 h-4 inline-block mr-2" />
-              Clear Pattern
-            </button>
-            <button
-              onClick={() => {
-                const randomPattern = POLY_PATTERNS[Math.floor(Math.random() * POLY_PATTERNS.length)];
-                loadPattern(randomPattern);
-              }}
-              className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
-            >
-              <Zap className="w-4 h-4 inline-block mr-2" />
-              Random Pattern
-            </button>
           </div>
         </>
       )}
