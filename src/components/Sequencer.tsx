@@ -89,11 +89,11 @@ const Sequencer: React.FC = () => {
         const swingOffset = isEvenStep ? 0 : (stepTime * swing * 0.5);
 
         // Play the step with swing offset
-        setTimeout(() => {
-          if (track.ref.current) {
-            track.ref.current.playStep(track.currentStep);
-          }
-        }, swingOffset);
+        if (track.ref.current) {
+          setTimeout(() => {
+            track.ref.current?.playStep(track.currentStep, timestamp + swingOffset);
+          }, swingOffset);
+        }
 
         // Update track state
         return {
