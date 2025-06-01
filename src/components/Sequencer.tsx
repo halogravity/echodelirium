@@ -15,10 +15,11 @@ interface Track {
   name?: string;
   stepAmount: number;
   currentStep: number;
+  bpm: number;
+  lastStepTime: number;
 }
 
 const Sequencer: React.FC = () => {
-  const [bpm, setBpm] = useState(120);
   const [swing, setSwing] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([
@@ -29,7 +30,9 @@ const Sequencer: React.FC = () => {
       defaultSamplePath: '/samples/kick.wav',
       name: 'Kick',
       stepAmount: 16,
-      currentStep: 0
+      currentStep: 0,
+      bpm: 120,
+      lastStepTime: 0
     },
     {
       id: 'snare',
@@ -38,7 +41,9 @@ const Sequencer: React.FC = () => {
       defaultSamplePath: '/samples/snare.wav',
       name: 'Snare',
       stepAmount: 16,
-      currentStep: 0
+      currentStep: 0,
+      bpm: 120,
+      lastStepTime: 0
     },
     {
       id: 'hihat',
@@ -47,7 +52,9 @@ const Sequencer: React.FC = () => {
       defaultSamplePath: '/samples/hihat.wav',
       name: 'Hi-hat',
       stepAmount: 16,
-      currentStep: 0
+      currentStep: 0,
+      bpm: 120,
+      lastStepTime: 0
     },
     {
       id: 'bass',
@@ -55,11 +62,50 @@ const Sequencer: React.FC = () => {
       ref: useRef<BassTrackRef>(null),
       name: 'Bass Synth',
       stepAmount: 16,
-      currentStep: 0
+      currentStep: 0,
+      bpm: 120,
+      lastStepTime: 0
     }
   ]);
 
-  const intervalRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(performance.now());
+
+  const updateTracks = (timestamp: number) => {
+    if (!isPlaying) return;
+
+    const deltaTime = timestamp - lastTimeRef.current;
+    lastTimeRef.current = timestamp;
+
+    setTracks(prev => prev.map(track => {
+      const stepTime = (60 / track.bpm) * 1000 / 4; // 16th notes
+      const timeSinceLastStep = timestamp - track.lastStepTime;
+
+      if (timeSinceLastStep >= stepTime) {
+        // Calculate swing offset
+        const isEvenStep = track.currentStep % 2 === 0;
+        const swingOffset = isEvenStep ? 0 : (stepTime * swing * 0.5);
+
+        // Play the step with swing offset
+        setTimeout(() => {
+          if (track.ref.current) {
+            track.ref.current.playStep(track.currentStep);
+          }
+        }, swingOffset);
+
+        // Update track state
+        return {
+          ...track,
+          currentStep: (track.currentStep + 1) % track.stepAmount,
+          lastStepTime: timestamp
+        };
+      }
+
+      return track;
+    }));
+
+    animationFrameRef.current = requestAnimationFrame(updateTracks);
+  };
 
   const startSequencer = () => {
     if (isPlaying) {
@@ -68,36 +114,22 @@ const Sequencer: React.FC = () => {
     }
 
     setIsPlaying(true);
-    setTracks(prev => prev.map(track => ({ ...track, currentStep: 0 })));
+    setTracks(prev => prev.map(track => ({
+      ...track,
+      currentStep: 0,
+      lastStepTime: performance.now()
+    })));
 
-    const stepTime = (60 / bpm) * 1000 / 4; // 16th notes
-    intervalRef.current = window.setInterval(() => {
-      setTracks(prev => prev.map(track => {
-        // Calculate swing offset based on whether it's an even or odd step
-        const isEvenStep = track.currentStep % 2 === 0;
-        const swingOffset = isEvenStep ? 0 : (stepTime * swing * 0.5);
-
-        // Schedule track to play with swing offset
-        setTimeout(() => {
-          if (track.ref.current) {
-            track.ref.current.playStep(track.currentStep);
-          }
-        }, swingOffset);
-
-        // Increment step counter for this track independently
-        return {
-          ...track,
-          currentStep: (track.currentStep + 1) % track.stepAmount
-        };
-      }));
-    }, stepTime);
+    lastTimeRef.current = performance.now();
+    animationFrameRef.current = requestAnimationFrame(updateTracks);
   };
 
   const stopSequencer = () => {
     setIsPlaying(false);
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
     
     // Reset all track steps and stop any playing notes
@@ -109,11 +141,26 @@ const Sequencer: React.FC = () => {
     }));
   };
 
-  // Handle individual track step amount changes
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
   const handleTrackStepAmountChange = (trackId: string, steps: number) => {
     setTracks(prev => prev.map(track => 
       track.id === trackId 
         ? { ...track, stepAmount: steps, currentStep: track.currentStep % steps }
+        : track
+    ));
+  };
+
+  const handleTrackBpmChange = (trackId: string, bpm: number) => {
+    setTracks(prev => prev.map(track =>
+      track.id === trackId
+        ? { ...track, bpm: Math.max(20, Math.min(300, bpm)) }
         : track
     ));
   };
@@ -125,7 +172,9 @@ const Sequencer: React.FC = () => {
       ref: React.createRef<DrumTrackRef | BassTrackRef | PolyTrackRef>(),
       name: type === 'drum' ? 'Drum' : type === 'bass' ? 'Bass Synth' : 'Poly Synth',
       stepAmount: 16,
-      currentStep: 0
+      currentStep: 0,
+      bpm: 120,
+      lastStepTime: performance.now()
     };
     setTracks(prev => [...prev, newTrack]);
   };
@@ -158,19 +207,6 @@ const Sequencer: React.FC = () => {
                   </>
                 )}
               </button>
-
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-red-500/70" />
-                <input
-                  type="number"
-                  value={bpm}
-                  onChange={(e) => setBpm(parseInt(e.target.value))}
-                  className="w-16 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-sm font-mono"
-                  min="20"
-                  max="300"
-                />
-                <span className="text-red-500/70 text-sm font-mono">BPM</span>
-              </div>
 
               <div className="flex items-center gap-2">
                 <span className="text-red-500/70 text-sm font-mono">Swing:</span>
@@ -227,6 +263,8 @@ const Sequencer: React.FC = () => {
                 stepAmount={track.stepAmount}
                 defaultSamplePath={track.defaultSamplePath}
                 name={track.name}
+                bpm={track.bpm}
+                onBpmChange={(bpm) => handleTrackBpmChange(track.id, bpm)}
                 onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
               />
             );
@@ -237,6 +275,8 @@ const Sequencer: React.FC = () => {
                 ref={track.ref as React.RefObject<BassTrackRef>}
                 currentStep={track.currentStep}
                 stepAmount={track.stepAmount}
+                bpm={track.bpm}
+                onBpmChange={(bpm) => handleTrackBpmChange(track.id, bpm)}
                 onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
               />
             );
@@ -247,6 +287,8 @@ const Sequencer: React.FC = () => {
                 ref={track.ref as React.RefObject<PolyTrackRef>}
                 currentStep={track.currentStep}
                 stepAmount={track.stepAmount}
+                bpm={track.bpm}
+                onBpmChange={(bpm) => handleTrackBpmChange(track.id, bpm)}
                 onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
               />
             );
