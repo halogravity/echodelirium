@@ -33,7 +33,7 @@ const Sequencer: React.FC = () => {
       name: 'Kick',
       stepAmount: 16,
       currentStep: 0,
-      bpm: 120,
+      bpm: masterBpm,
       lastStepTime: 0
     },
     {
@@ -44,7 +44,7 @@ const Sequencer: React.FC = () => {
       name: 'Snare',
       stepAmount: 16,
       currentStep: 0,
-      bpm: 120,
+      bpm: masterBpm,
       lastStepTime: 0
     },
     {
@@ -55,7 +55,7 @@ const Sequencer: React.FC = () => {
       name: 'Hi-hat',
       stepAmount: 16,
       currentStep: 0,
-      bpm: 120,
+      bpm: masterBpm,
       lastStepTime: 0
     },
     {
@@ -65,7 +65,7 @@ const Sequencer: React.FC = () => {
       name: 'Bass Synth',
       stepAmount: 16,
       currentStep: 0,
-      bpm: 120,
+      bpm: masterBpm,
       lastStepTime: 0
     }
   ]);
