@@ -18,6 +18,7 @@ interface DrumTrackProps {
   stepAmount: number;
   defaultSamplePath?: string;
   name?: string;
+  onStepAmountChange?: (steps: number) => void;
 }
 
 export interface DrumTrackRef {
@@ -38,7 +39,13 @@ const DEFAULT_SAMPLES = [
   { id: 'sub', name: 'Sub', path: '/samples/sub.wav' }
 ];
 
-const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({ currentStep, stepAmount, defaultSamplePath, name }, ref) => {
+const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({ 
+  currentStep, 
+  stepAmount, 
+  defaultSamplePath, 
+  name,
+  onStepAmountChange 
+}, ref) => {
   const [pattern, setPattern] = useState<boolean[]>(Array(stepAmount).fill(false));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [volume, setVolume] = useState(0);
@@ -232,6 +239,11 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({ currentStep, stepA
       });
       return newPattern;
     });
+
+    // Notify parent of step amount change
+    if (onStepAmountChange) {
+      onStepAmountChange(steps);
+    }
   };
 
   return (
