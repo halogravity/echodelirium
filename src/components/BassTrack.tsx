@@ -3,7 +3,7 @@ import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, 
 import { Scale } from 'tonal';
 import * as Tone from 'tone';
 import Knob from './Knob';
-import { savePreset, loadPresets, deletePreset, updatePreset } from '../lib/presets';
+import { savePreset, loadPresets, Preset } from '../lib/presets';
 
 interface BassTrackProps {
   currentStep: number;
@@ -16,6 +16,16 @@ export interface BassTrackRef {
   stopCurrentNotes: () => void;
   playStep: (step: number, time?: number) => void;
   stop: () => void;
+}
+
+interface PatternPreset {
+  name: string;
+  pattern: boolean[][];
+  scale: {
+    rootNote: string;
+    octave: number;
+    selectedScale: string;
+  };
 }
 
 const STEP_OPTIONS = [4, 8, 16, 32, 64] as const;
@@ -34,7 +44,7 @@ const DEFAULT_PARAMS = {
   oscillatorType: "sawtooth" as OscillatorType
 };
 
-const BASS_PATTERNS = [
+const BASS_PATTERNS: PatternPreset[] = [
   {
     name: "Classic House",
     pattern: Array(16).fill(null).map((_, i) => [i % 4 === 0, false, false, false, false]),
@@ -89,7 +99,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [localStepAmount, setLocalStepAmount] = useState<StepAmount>(stepAmount as StepAmount);
   const [params, setParams] = useState(() => ({ ...DEFAULT_PARAMS }));
-  const [presets, setPresets] = useState<any[]>([]);
+  const [presets, setPresets] = useState<Preset[]>([]);
   const [isLoadingPresets, setIsLoadingPresets] = useState(false);
   const [isSavingPreset, setIsSavingPreset] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
@@ -237,27 +247,15 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
     }
   };
 
-  const handleLoadPreset = (preset: any) => {
+  const handleLoadPreset = (preset: Preset) => {
     try {
-      const presetData = preset.parameters;
-      if (presetData.pattern) {
-        const newPattern = Array(localStepAmount).fill(null).map((_, i) => {
-          if (i < presetData.pattern.length) {
-            return [...presetData.pattern[i]];
-          }
-          return Array(5).fill(false);
-        });
-        setPattern(newPattern);
-      }
-      
-      if (presetData.params) {
-        setParams({
-          ...DEFAULT_PARAMS,
-          ...presetData.params
-        });
-      }
-      
-      if (presetData.stepAmount && STEP_OPTIONS.includes(presetData.stepAmount)) {
+      const presetData = preset.parameters as any;
+      setPattern(presetData.pattern || Array(localStepAmount).fill(null).map(() => Array(5).fill(false)));
+      setParams(prev => ({
+        ...DEFAULT_PARAMS,
+        ...(presetData.params || {})
+      }));
+      if (presetData.stepAmount) {
         handleStepAmountChange(presetData.stepAmount);
       }
     } catch (error) {
@@ -299,7 +297,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
     setPattern(Array(localStepAmount).fill(null).map(() => Array(5).fill(false)));
   };
 
-  const loadPattern = (preset: typeof BASS_PATTERNS[number]) => {
+  const loadPattern = (preset: PatternPreset) => {
     setPattern(preset.pattern);
     setParams(prev => ({
       ...prev,
