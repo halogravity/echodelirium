@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Upload } from 'lucide-react';
+import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Upload, Clock } from 'lucide-react';
 import { Howl } from 'howler';
 import { AudioLoader } from '../lib/audioLoader';
 import { supabase } from '../lib/supabase';
@@ -18,7 +18,9 @@ interface DrumTrackProps {
   stepAmount: number;
   defaultSamplePath?: string;
   name?: string;
+  bpm: number;
   onStepAmountChange?: (steps: number) => void;
+  onBpmChange?: (bpm: number) => void;
 }
 
 export interface DrumTrackRef {
@@ -44,7 +46,9 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
   stepAmount, 
   defaultSamplePath, 
   name,
-  onStepAmountChange 
+  bpm,
+  onStepAmountChange,
+  onBpmChange
 }, ref) => {
   const [pattern, setPattern] = useState<boolean[]>(Array(stepAmount).fill(false));
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -267,17 +271,32 @@ const DrumTrack = forwardRef<DrumTrackRef, DrumTrackProps>(({
         </div>
 
         {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <span className="text-red-500/70 text-xs font-mono">Steps:</span>
-            <select
-              value={localStepAmount}
-              onChange={(e) => handleStepAmountChange(parseInt(e.target.value))}
-              className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
-            >
-              {STEP_OPTIONS.map(amount => (
-                <option key={amount} value={amount}>{amount}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-red-500/70" />
+              <input
+                type="number"
+                value={bpm}
+                onChange={(e) => onBpmChange?.(parseInt(e.target.value))}
+                className="w-16 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-sm font-mono"
+                min="20"
+                max="300"
+              />
+              <span className="text-red-500/70 text-xs font-mono">BPM</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-red-500/70 text-xs font-mono">Steps:</span>
+              <select
+                value={localStepAmount}
+                onChange={(e) => handleStepAmountChange(parseInt(e.target.value))}
+                className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
+              >
+                {STEP_OPTIONS.map(amount => (
+                  <option key={amount} value={amount}>{amount}</option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
       </div>
