@@ -3,7 +3,7 @@ import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, 
 import { Scale } from 'tonal';
 import * as Tone from 'tone';
 import Knob from './Knob';
-import { savePreset, loadPresets, Preset } from '../lib/presets';
+import { savePreset, loadPresets, deletePreset, updatePreset } from '../lib/presets';
 
 interface BassTrackProps {
   currentStep: number;
@@ -16,16 +16,6 @@ export interface BassTrackRef {
   stopCurrentNotes: () => void;
   playStep: (step: number, time?: number) => void;
   stop: () => void;
-}
-
-interface PatternPreset {
-  name: string;
-  pattern: boolean[][];
-  scale: {
-    rootNote: string;
-    octave: number;
-    selectedScale: string;
-  };
 }
 
 const STEP_OPTIONS = [4, 8, 16, 32, 64] as const;
@@ -44,7 +34,7 @@ const DEFAULT_PARAMS = {
   oscillatorType: "sawtooth" as OscillatorType
 };
 
-const BASS_PATTERNS: PatternPreset[] = [
+const BASS_PATTERNS = [
   {
     name: "Classic House",
     pattern: Array(16).fill(null).map((_, i) => [i % 4 === 0, false, false, false, false]),
@@ -250,11 +240,15 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
   const handleLoadPreset = (preset: Preset) => {
     try {
       const presetData = preset.parameters as any;
-      setPattern(presetData.pattern || Array(localStepAmount).fill(null).map(() => Array(5).fill(false)));
-      setParams(prev => ({
-        ...DEFAULT_PARAMS,
-        ...(presetData.params || {})
-      }));
+      if (presetData.pattern) {
+        setPattern(presetData.pattern);
+      }
+      if (presetData.params) {
+        setParams(prev => ({
+          ...DEFAULT_PARAMS,
+          ...presetData.params
+        }));
+      }
       if (presetData.stepAmount) {
         handleStepAmountChange(presetData.stepAmount);
       }
@@ -297,7 +291,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
     setPattern(Array(localStepAmount).fill(null).map(() => Array(5).fill(false)));
   };
 
-  const loadPattern = (preset: PatternPreset) => {
+  const loadPattern = (preset: typeof BASS_PATTERNS[number]) => {
     setPattern(preset.pattern);
     setParams(prev => ({
       ...prev,
