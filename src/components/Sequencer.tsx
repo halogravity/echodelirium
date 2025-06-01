@@ -13,14 +13,14 @@ interface Track {
   ref: React.RefObject<DrumTrackRef | BassTrackRef | PolyTrackRef>;
   defaultSamplePath?: string;
   name?: string;
-  stepAmount?: number;
+  stepAmount: number;
+  currentStep: number;
 }
 
 const Sequencer: React.FC = () => {
   const [bpm, setBpm] = useState(120);
   const [swing, setSwing] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   const [tracks, setTracks] = useState<Track[]>([
     {
       id: 'kick',
@@ -28,7 +28,8 @@ const Sequencer: React.FC = () => {
       ref: useRef<DrumTrackRef>(null),
       defaultSamplePath: '/samples/kick.wav',
       name: 'Kick',
-      stepAmount: 16
+      stepAmount: 16,
+      currentStep: 0
     },
     {
       id: 'snare',
@@ -36,7 +37,8 @@ const Sequencer: React.FC = () => {
       ref: useRef<DrumTrackRef>(null),
       defaultSamplePath: '/samples/snare.wav',
       name: 'Snare',
-      stepAmount: 16
+      stepAmount: 16,
+      currentStep: 0
     },
     {
       id: 'hihat',
@@ -44,23 +46,20 @@ const Sequencer: React.FC = () => {
       ref: useRef<DrumTrackRef>(null),
       defaultSamplePath: '/samples/hihat.wav',
       name: 'Hi-hat',
-      stepAmount: 16
+      stepAmount: 16,
+      currentStep: 0
     },
     {
       id: 'bass',
       type: 'bass',
       ref: useRef<BassTrackRef>(null),
       name: 'Bass Synth',
-      stepAmount: 16
+      stepAmount: 16,
+      currentStep: 0
     }
   ]);
 
   const intervalRef = useRef<number | null>(null);
-  const currentStepRef = useRef(currentStep);
-
-  useEffect(() => {
-    currentStepRef.current = currentStep;
-  }, [currentStep]);
 
   const startSequencer = () => {
     if (isPlaying) {
@@ -69,34 +68,28 @@ const Sequencer: React.FC = () => {
     }
 
     setIsPlaying(true);
-    setCurrentStep(0);
-    currentStepRef.current = 0;
+    setTracks(prev => prev.map(track => ({ ...track, currentStep: 0 })));
 
     const stepTime = (60 / bpm) * 1000 / 4; // 16th notes
     intervalRef.current = window.setInterval(() => {
-      const step = currentStepRef.current;
+      setTracks(prev => prev.map(track => {
+        // Calculate swing offset based on whether it's an even or odd step
+        const isEvenStep = track.currentStep % 2 === 0;
+        const swingOffset = isEvenStep ? 0 : (stepTime * swing * 0.5);
 
-      // Calculate swing offset
-      const isEvenStep = step % 2 === 0;
-      const swingOffset = isEvenStep ? 0 : (stepTime * swing * 0.5);
+        // Schedule track to play with swing offset
+        setTimeout(() => {
+          if (track.ref.current) {
+            track.ref.current.playStep(track.currentStep);
+          }
+        }, swingOffset);
 
-      // Schedule tracks to play
-      tracks.forEach(track => {
-        if (track.ref.current) {
-          setTimeout(() => {
-            // Use track's individual step count
-            const trackStep = step % (track.stepAmount || 16);
-            track.ref.current?.playStep(trackStep);
-          }, swingOffset);
-        }
-      });
-
-      // Find the longest track length to determine sequence length
-      const maxSteps = Math.max(...tracks.map(track => track.stepAmount || 16));
-      
-      // Increment global step counter
-      setCurrentStep(prev => (prev + 1) % maxSteps);
-      currentStepRef.current = (currentStepRef.current + 1) % maxSteps;
+        // Increment step counter for this track independently
+        return {
+          ...track,
+          currentStep: (track.currentStep + 1) % track.stepAmount
+        };
+      }));
     }, stepTime);
   };
 
@@ -106,22 +99,21 @@ const Sequencer: React.FC = () => {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    setCurrentStep(0);
-    currentStepRef.current = 0;
-
-    // Stop all tracks
-    tracks.forEach(track => {
+    
+    // Reset all track steps and stop any playing notes
+    setTracks(prev => prev.map(track => {
       if (track.ref.current) {
         track.ref.current.stop();
       }
-    });
+      return { ...track, currentStep: 0 };
+    }));
   };
 
   // Handle individual track step amount changes
   const handleTrackStepAmountChange = (trackId: string, steps: number) => {
     setTracks(prev => prev.map(track => 
       track.id === trackId 
-        ? { ...track, stepAmount: steps }
+        ? { ...track, stepAmount: steps, currentStep: track.currentStep % steps }
         : track
     ));
   };
@@ -132,7 +124,8 @@ const Sequencer: React.FC = () => {
       type,
       ref: React.createRef<DrumTrackRef | BassTrackRef | PolyTrackRef>(),
       name: type === 'drum' ? 'Drum' : type === 'bass' ? 'Bass Synth' : 'Poly Synth',
-      stepAmount: 16 // Default step amount for new tracks
+      stepAmount: 16,
+      currentStep: 0
     };
     setTracks(prev => [...prev, newTrack]);
   };
@@ -230,8 +223,8 @@ const Sequencer: React.FC = () => {
               <DrumTrack
                 key={track.id}
                 ref={track.ref as React.RefObject<DrumTrackRef>}
-                currentStep={currentStep}
-                stepAmount={track.stepAmount || 16}
+                currentStep={track.currentStep}
+                stepAmount={track.stepAmount}
                 defaultSamplePath={track.defaultSamplePath}
                 name={track.name}
                 onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
@@ -242,8 +235,8 @@ const Sequencer: React.FC = () => {
               <BassTrack
                 key={track.id}
                 ref={track.ref as React.RefObject<BassTrackRef>}
-                currentStep={currentStep}
-                stepAmount={track.stepAmount || 16}
+                currentStep={track.currentStep}
+                stepAmount={track.stepAmount}
                 onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
               />
             );
@@ -252,8 +245,8 @@ const Sequencer: React.FC = () => {
               <PolyTrack
                 key={track.id}
                 ref={track.ref as React.RefObject<PolyTrackRef>}
-                currentStep={currentStep}
-                stepAmount={track.stepAmount || 16}
+                currentStep={track.currentStep}
+                stepAmount={track.stepAmount}
                 onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
               />
             );
