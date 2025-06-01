@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Knob } from './Knob';
+import Knob from './Knob';
 import * as Tone from 'tone';
 
 interface PolyTrackProps {
