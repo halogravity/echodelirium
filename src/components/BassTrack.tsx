@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import * as Tone from 'tone';
 import { Scale } from 'tonal';
-import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Zap } from 'lucide-react';
+import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Zap, Clock } from 'lucide-react';
 import Knob from './Knob';
 
 interface BassTrackProps {
   currentStep: number;
   stepAmount: number;
+  bpm: number;
   onStepAmountChange?: (steps: number) => void;
+  onBpmChange?: (bpm: number) => void;
 }
 
 export interface BassTrackRef {
@@ -369,7 +371,13 @@ const SOUND_PRESETS = [
   }
 ];
 
-const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepAmount, onStepAmountChange }, ref) => {
+const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ 
+  currentStep, 
+  stepAmount,
+  bpm,
+  onStepAmountChange,
+  onBpmChange
+}, ref) => {
   const synthRef = useRef<Tone.MonoSynth | null>(null);
   const currentNoteRef = useRef<string | null>(null);
   const patternRef = useRef<boolean[][]>([]);
@@ -589,7 +597,6 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
     });
     setPattern(newPattern);
 
-    // Notify parent of step amount change
     if (onStepAmountChange) {
       onStepAmountChange(steps);
     }
@@ -617,6 +624,19 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({ currentStep, stepA
 
         {!isCollapsed && (
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-red-500/70" />
+              <input
+                type="number"
+                value={bpm}
+                onChange={(e) => onBpmChange?.(parseInt(e.target.value))}
+                className="w-16 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-sm font-mono"
+                min="20"
+                max="300"
+              />
+              <span className="text-red-500/70 text-xs font-mono">BPM</span>
+            </div>
+
             <div className="flex items-center gap-2">
               <span className="text-red-500/70 text-xs font-mono">Steps:</span>
               <select
