@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import * as Tone from 'tone';
-import { Scale } from 'tonal';
 import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Zap } from 'lucide-react';
+import { Scale } from 'tonal';
 import Knob from './Knob';
+import { savePreset, loadPresets, Preset } from '../lib/presets';
 
 interface BassTrackProps {
   currentStep: number;
@@ -96,56 +96,68 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
     filterQ: 2,
     oscillatorType: "sawtooth" as OscillatorType
   }));
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [isLoadingPresets, setIsLoadingPresets] = useState(false);
+  const [isSavingPreset, setIsSavingPreset] = useState(false);
+  const [newPresetName, setNewPresetName] = useState('');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
-  const synthRef = useRef<Tone.MonoSynth | null>(null);
+  const synthRef = useRef<any>(null);
   const currentNoteRef = useRef<string | null>(null);
   const patternRef = useRef(pattern);
-  const lastTriggerTimeRef = useRef(0);
 
   useEffect(() => {
-    if (!synthRef.current) {
-      synthRef.current = new Tone.MonoSynth({
-        oscillator: { type: params.oscillatorType },
-        envelope: {
-          attack: params.attack,
-          decay: params.decay,
-          sustain: params.sustain,
-          release: params.release
-        },
-        filter: {
-          Q: params.filterQ,
-          frequency: params.filterFreq,
-          type: 'lowpass',
-          rolloff: -24
-        }
-      }).toDestination();
-    }
-
-    return () => {
-      if (synthRef.current) {
-        synthRef.current.dispose();
-        synthRef.current = null;
-      }
-    };
+    loadUserPresets();
   }, []);
 
-  useEffect(() => {
-    if (synthRef.current) {
-      synthRef.current.set({
-        oscillator: { type: params.oscillatorType },
-        envelope: {
-          attack: params.attack,
-          decay: params.decay,
-          sustain: params.sustain,
-          release: params.release
-        },
-        filter: {
-          Q: params.filterQ,
-          frequency: params.filterFreq
-        }
-      });
+  const loadUserPresets = async () => {
+    setIsLoadingPresets(true);
+    try {
+      const userPresets = await loadPresets();
+      setPresets(userPresets);
+    } catch (error) {
+      console.error('Error loading presets:', error);
+    } finally {
+      setIsLoadingPresets(false);
     }
-  }, [params]);
+  };
+
+  const handleSavePreset = async () => {
+    if (!newPresetName.trim()) return;
+
+    setIsSavingPreset(true);
+    try {
+      const presetData = {
+        pattern,
+        params,
+        stepAmount: localStepAmount
+      };
+
+      const savedPreset = await savePreset(newPresetName, presetData);
+      if (savedPreset) {
+        setPresets(prev => [savedPreset, ...prev]);
+        setShowSaveDialog(false);
+        setNewPresetName('');
+      }
+    } catch (error) {
+      console.error('Error saving preset:', error);
+    } finally {
+      setIsSavingPreset(false);
+    }
+  };
+
+  const handleLoadPreset = (preset: Preset) => {
+    try {
+      const presetData = preset.parameters as any;
+      setPattern(presetData.pattern);
+      setParams(presetData.params);
+      if (presetData.stepAmount) {
+        handleStepAmountChange(presetData.stepAmount);
+      }
+    } catch (error) {
+      console.error('Error loading preset:', error);
+    }
+  };
 
   useEffect(() => {
     patternRef.current = pattern;
@@ -169,19 +181,15 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
         .filter(Boolean) as string[];
 
       if (activeNotes.length > 0) {
-        const now = Tone.now();
-        const minTimeBetweenNotes = 0.05; // 50ms minimum between notes
-        const timeOffset = Math.max(0, lastTriggerTimeRef.current + minTimeBetweenNotes - now);
-        const scheduleTime = time || (now + timeOffset);
-
+        const now = time || synthRef.current.now();
+        const note = activeNotes[0];
+        
         if (currentNoteRef.current) {
-          synthRef.current.triggerRelease(scheduleTime);
+          synthRef.current.triggerRelease(now);
         }
 
-        const note = activeNotes[0];
-        synthRef.current.triggerAttack(note, scheduleTime);
+        synthRef.current.triggerAttack(note, now);
         currentNoteRef.current = note;
-        lastTriggerTimeRef.current = scheduleTime;
       }
     },
     stop: () => {
@@ -270,22 +278,72 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
               </select>
             </div>
 
-            <select
-              onChange={(e) => {
-                const pattern = BASS_PATTERNS.find(p => p.name === e.target.value);
-                if (pattern) loadPattern(pattern);
-                e.target.value = '';
-              }}
-              className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
-            >
-              <option value="">Load Pattern</option>
-              {BASS_PATTERNS.map(pattern => (
-                <option key={pattern.name} value={pattern.name}>{pattern.name}</option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                onChange={(e) => {
+                  if (e.target.value === 'save') {
+                    setShowSaveDialog(true);
+                  } else {
+                    const preset = presets.find(p => p.id === e.target.value);
+                    if (preset) handleLoadPreset(preset);
+                  }
+                  e.target.value = '';
+                }}
+                className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
+                disabled={isLoadingPresets}
+              >
+                <option value="">User Presets</option>
+                <option value="save">Save Current...</option>
+                {presets.map(preset => (
+                  <option key={preset.id} value={preset.id}>{preset.name}</option>
+                ))}
+              </select>
+
+              <select
+                onChange={(e) => {
+                  const pattern = BASS_PATTERNS.find(p => p.name === e.target.value);
+                  if (pattern) loadPattern(pattern);
+                  e.target.value = '';
+                }}
+                className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
+              >
+                <option value="">Load Pattern</option>
+                {BASS_PATTERNS.map(pattern => (
+                  <option key={pattern.name} value={pattern.name}>{pattern.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
       </div>
+
+      {showSaveDialog && (
+        <div className="mb-4 flex items-center gap-2">
+          <input
+            type="text"
+            value={newPresetName}
+            onChange={(e) => setNewPresetName(e.target.value)}
+            placeholder="Preset name..."
+            className="flex-1 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-xs font-mono"
+          />
+          <button
+            onClick={handleSavePreset}
+            disabled={isSavingPreset || !newPresetName.trim()}
+            className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40 disabled:opacity-50"
+          >
+            {isSavingPreset ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            onClick={() => {
+              setShowSaveDialog(false);
+              setNewPresetName('');
+            }}
+            className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
 
       {!isCollapsed && (
         <>
