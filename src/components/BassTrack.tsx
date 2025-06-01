@@ -173,7 +173,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
     playStep: (step: number, time?: number) => {
       if (!synthRef.current || step >= patternRef.current.length) return;
 
-      const now = time || Tone.now();
+      let now = time || Tone.now();
       
       // Ensure minimum time between triggers to prevent overlapping
       if (now <= lastTriggerTimeRef.current) {
