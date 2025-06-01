@@ -7,9 +7,6 @@ import type { DrumTrackRef } from './DrumTrack';
 import type { BassTrackRef } from './BassTrack';
 import type { PolyTrackRef } from './PolyTrack';
 
-const STEP_OPTIONS = [4, 8, 16, 32, 64] as const;
-type StepAmount = typeof STEP_OPTIONS[number];
-
 interface Track {
   id: string;
   type: 'drum' | 'bass' | 'poly';
@@ -24,34 +21,37 @@ const Sequencer: React.FC = () => {
   const [swing, setSwing] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [stepAmount, setStepAmount] = useState<StepAmount>(16);
   const [tracks, setTracks] = useState<Track[]>([
     {
       id: 'kick',
       type: 'drum',
       ref: useRef<DrumTrackRef>(null),
       defaultSamplePath: '/samples/kick.wav',
-      name: 'Kick'
+      name: 'Kick',
+      stepAmount: 16
     },
     {
       id: 'snare',
       type: 'drum',
       ref: useRef<DrumTrackRef>(null),
       defaultSamplePath: '/samples/snare.wav',
-      name: 'Snare'
+      name: 'Snare',
+      stepAmount: 16
     },
     {
       id: 'hihat',
       type: 'drum',
       ref: useRef<DrumTrackRef>(null),
       defaultSamplePath: '/samples/hihat.wav',
-      name: 'Hi-hat'
+      name: 'Hi-hat',
+      stepAmount: 16
     },
     {
       id: 'bass',
       type: 'bass',
       ref: useRef<BassTrackRef>(null),
-      name: 'Bass Synth'
+      name: 'Bass Synth',
+      stepAmount: 16
     }
   ]);
 
@@ -84,17 +84,19 @@ const Sequencer: React.FC = () => {
       tracks.forEach(track => {
         if (track.ref.current) {
           setTimeout(() => {
-            // For drum tracks, use their individual step count if set
-            const trackStepAmount = track.stepAmount || stepAmount;
-            const trackStep = step % trackStepAmount;
+            // Use track's individual step count
+            const trackStep = step % (track.stepAmount || 16);
             track.ref.current?.playStep(trackStep);
           }, swingOffset);
         }
       });
 
+      // Find the longest track length to determine sequence length
+      const maxSteps = Math.max(...tracks.map(track => track.stepAmount || 16));
+      
       // Increment global step counter
-      setCurrentStep(prev => (prev + 1) % stepAmount);
-      currentStepRef.current = (currentStepRef.current + 1) % stepAmount;
+      setCurrentStep(prev => (prev + 1) % maxSteps);
+      currentStepRef.current = (currentStepRef.current + 1) % maxSteps;
     }, stepTime);
   };
 
@@ -115,10 +117,6 @@ const Sequencer: React.FC = () => {
     });
   };
 
-  const handleStepAmountChange = (steps: number) => {
-    setStepAmount(steps as StepAmount);
-  };
-
   // Handle individual track step amount changes
   const handleTrackStepAmountChange = (trackId: string, steps: number) => {
     setTracks(prev => prev.map(track => 
@@ -133,7 +131,8 @@ const Sequencer: React.FC = () => {
       id: `${type}-${Date.now()}`,
       type,
       ref: React.createRef<DrumTrackRef | BassTrackRef | PolyTrackRef>(),
-      name: type === 'drum' ? 'Drum' : type === 'bass' ? 'Bass Synth' : 'Poly Synth'
+      name: type === 'drum' ? 'Drum' : type === 'bass' ? 'Bass Synth' : 'Poly Synth',
+      stepAmount: 16 // Default step amount for new tracks
     };
     setTracks(prev => [...prev, newTrack]);
   };
@@ -178,19 +177,6 @@ const Sequencer: React.FC = () => {
                   max="300"
                 />
                 <span className="text-red-500/70 text-sm font-mono">BPM</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-red-500/70 text-sm font-mono">Steps:</span>
-                <select
-                  value={stepAmount}
-                  onChange={(e) => handleStepAmountChange(parseInt(e.target.value))}
-                  className="bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-sm font-mono"
-                >
-                  {STEP_OPTIONS.map(amount => (
-                    <option key={amount} value={amount}>{amount}</option>
-                  ))}
-                </select>
               </div>
 
               <div className="flex items-center gap-2">
@@ -245,7 +231,7 @@ const Sequencer: React.FC = () => {
                 key={track.id}
                 ref={track.ref as React.RefObject<DrumTrackRef>}
                 currentStep={currentStep}
-                stepAmount={track.stepAmount || stepAmount}
+                stepAmount={track.stepAmount || 16}
                 defaultSamplePath={track.defaultSamplePath}
                 name={track.name}
                 onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
@@ -257,7 +243,8 @@ const Sequencer: React.FC = () => {
                 key={track.id}
                 ref={track.ref as React.RefObject<BassTrackRef>}
                 currentStep={currentStep}
-                stepAmount={stepAmount}
+                stepAmount={track.stepAmount || 16}
+                onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
               />
             );
           } else {
@@ -266,7 +253,8 @@ const Sequencer: React.FC = () => {
                 key={track.id}
                 ref={track.ref as React.RefObject<PolyTrackRef>}
                 currentStep={currentStep}
-                stepAmount={stepAmount}
+                stepAmount={track.stepAmount || 16}
+                onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
               />
             );
           }
