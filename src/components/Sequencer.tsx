@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Square, Settings, Music2, Volume2, Clock, Plus, ArrowDownUp } from 'lucide-react';
+import { Play, Square, Settings, Music2, Volume2, Clock, Plus } from 'lucide-react';
 import DrumTrack from './DrumTrack';
 import BassTrack from './BassTrack';
 import PolyTrack from './PolyTrack';
@@ -22,8 +22,6 @@ interface Track {
 const Sequencer: React.FC = () => {
   const [swing, setSwing] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [masterBpm, setMasterBpm] = useState(120);
-  const [showBpmSync, setShowBpmSync] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([
     {
       id: 'kick',
@@ -33,7 +31,7 @@ const Sequencer: React.FC = () => {
       name: 'Kick',
       stepAmount: 16,
       currentStep: 0,
-      bpm: masterBpm,
+      bpm: 120,
       lastStepTime: 0
     },
     {
@@ -44,7 +42,7 @@ const Sequencer: React.FC = () => {
       name: 'Snare',
       stepAmount: 16,
       currentStep: 0,
-      bpm: masterBpm,
+      bpm: 120,
       lastStepTime: 0
     },
     {
@@ -55,7 +53,7 @@ const Sequencer: React.FC = () => {
       name: 'Hi-hat',
       stepAmount: 16,
       currentStep: 0,
-      bpm: masterBpm,
+      bpm: 120,
       lastStepTime: 0
     },
     {
@@ -65,7 +63,7 @@ const Sequencer: React.FC = () => {
       name: 'Bass Synth',
       stepAmount: 16,
       currentStep: 0,
-      bpm: masterBpm,
+      bpm: 120,
       lastStepTime: 0
     }
   ]);
@@ -89,11 +87,11 @@ const Sequencer: React.FC = () => {
         const swingOffset = isEvenStep ? 0 : (stepTime * swing * 0.5);
 
         // Play the step with swing offset
-        if (track.ref.current) {
-          setTimeout(() => {
-            track.ref.current?.playStep(track.currentStep, timestamp + swingOffset);
-          }, swingOffset);
-        }
+        setTimeout(() => {
+          if (track.ref.current) {
+            track.ref.current.playStep(track.currentStep);
+          }
+        }, swingOffset);
 
         // Update track state
         return {
@@ -115,14 +113,6 @@ const Sequencer: React.FC = () => {
       return;
     }
 
-    // Initialize all tracks
-    tracks.forEach(track => {
-      if (track.ref.current) {
-        // Reset track state
-        track.ref.current.stop();
-      }
-    });
-
     setIsPlaying(true);
     setTracks(prev => prev.map(track => ({
       ...track,
@@ -142,24 +132,13 @@ const Sequencer: React.FC = () => {
       animationFrameRef.current = null;
     }
     
-    // Stop all tracks and reset their state
-    tracks.forEach(track => {
+    // Reset all track steps and stop any playing notes
+    setTracks(prev => prev.map(track => {
       if (track.ref.current) {
         track.ref.current.stop();
       }
-    });
-
-    setTracks(prev => prev.map(track => ({
-      ...track,
-      currentStep: 0
-    })));
-  };
-
-  const syncAllBpms = () => {
-    setTracks(prev => prev.map(track => ({
-      ...track,
-      bpm: masterBpm
-    })));
+      return { ...track, currentStep: 0 };
+    }));
   };
 
   useEffect(() => {
@@ -167,12 +146,6 @@ const Sequencer: React.FC = () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      // Stop all tracks when component unmounts
-      tracks.forEach(track => {
-        if (track.ref.current) {
-          track.ref.current.stop();
-        }
-      });
     };
   }, []);
 
@@ -200,7 +173,7 @@ const Sequencer: React.FC = () => {
       name: type === 'drum' ? 'Drum' : type === 'bass' ? 'Bass Synth' : 'Poly Synth',
       stepAmount: 16,
       currentStep: 0,
-      bpm: masterBpm,
+      bpm: 120,
       lastStepTime: performance.now()
     };
     setTracks(prev => [...prev, newTrack]);
@@ -250,33 +223,6 @@ const Sequencer: React.FC = () => {
                   {Math.round(swing * 100)}%
                 </span>
               </div>
-
-              <button
-                onClick={() => setShowBpmSync(!showBpmSync)}
-                className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
-              >
-                <ArrowDownUp className="w-4 h-4" />
-                Sync BPM
-              </button>
-
-              {showBpmSync && (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    value={masterBpm}
-                    onChange={(e) => setMasterBpm(parseInt(e.target.value))}
-                    className="w-16 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-sm font-mono"
-                    min="20"
-                    max="300"
-                  />
-                  <button
-                    onClick={syncAllBpms}
-                    className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
-                  >
-                    Apply
-                  </button>
-                </div>
-              )}
             </div>
 
             <div className="flex items-center gap-2">
