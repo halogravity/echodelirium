@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Square, Settings, Music2, Volume2, Clock, Plus } from 'lucide-react';
+import { Play, Square, Settings, Music2, Volume2, Clock, Plus, ArrowDownUp } from 'lucide-react';
 import DrumTrack from './DrumTrack';
 import BassTrack from './BassTrack';
 import PolyTrack from './PolyTrack';
@@ -22,6 +22,8 @@ interface Track {
 const Sequencer: React.FC = () => {
   const [swing, setSwing] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [masterBpm, setMasterBpm] = useState(120);
+  const [showBpmSync, setShowBpmSync] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([
     {
       id: 'kick',
@@ -141,6 +143,13 @@ const Sequencer: React.FC = () => {
     }));
   };
 
+  const syncAllBpms = () => {
+    setTracks(prev => prev.map(track => ({
+      ...track,
+      bpm: masterBpm
+    })));
+  };
+
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) {
@@ -223,6 +232,33 @@ const Sequencer: React.FC = () => {
                   {Math.round(swing * 100)}%
                 </span>
               </div>
+
+              <button
+                onClick={() => setShowBpmSync(!showBpmSync)}
+                className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
+              >
+                <ArrowDownUp className="w-4 h-4" />
+                Sync BPM
+              </button>
+
+              {showBpmSync && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={masterBpm}
+                    onChange={(e) => setMasterBpm(parseInt(e.target.value))}
+                    className="w-16 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-sm font-mono"
+                    min="20"
+                    max="300"
+                  />
+                  <button
+                    onClick={syncAllBpms}
+                    className="px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
