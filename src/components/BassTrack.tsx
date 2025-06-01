@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Zap } from 'lucide-react';
 import { Scale } from 'tonal';
+import * as Tone from 'tone';
 import Knob from './Knob';
 import { savePreset, loadPresets, Preset } from '../lib/presets';
 
@@ -36,7 +37,7 @@ const DEFAULT_PARAMS = {
   selectedScale: 'major',
   attack: 0.01,
   decay: 0.3,
-  sustain: 0.8,
+  sustain: 0.4, // Set to 40%
   release: 0.2,
   filterFreq: 800,
   filterQ: 2,
@@ -112,6 +113,51 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
   useEffect(() => {
     loadUserPresets();
   }, []);
+
+  // Initialize synth
+  useEffect(() => {
+    const synth = new Tone.MonoSynth({
+      oscillator: {
+        type: params.oscillatorType
+      },
+      envelope: {
+        attack: params.attack,
+        decay: params.decay,
+        sustain: params.sustain,
+        release: params.release
+      },
+      filter: {
+        Q: params.filterQ,
+        frequency: params.filterFreq,
+        type: 'lowpass'
+      }
+    }).toDestination();
+
+    synthRef.current = synth;
+
+    return () => {
+      synth.dispose();
+    };
+  }, []);
+
+  // Update synth parameters when they change
+  useEffect(() => {
+    if (synthRef.current) {
+      synthRef.current.set({
+        oscillator: { type: params.oscillatorType },
+        envelope: {
+          attack: params.attack,
+          decay: params.decay,
+          sustain: params.sustain,
+          release: params.release
+        },
+        filter: {
+          Q: params.filterQ,
+          frequency: params.filterFreq
+        }
+      });
+    }
+  }, [params]);
 
   const loadUserPresets = async () => {
     setIsLoadingPresets(true);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Music, Settings2, Save, FolderOpen, Trash2, ChevronDown, ChevronRight, Zap } from 'lucide-react';
 import { Scale } from 'tonal';
+import * as Tone from 'tone';
 import Knob from './Knob';
 import { savePreset, loadPresets, Preset } from '../lib/presets';
 
@@ -26,7 +27,7 @@ const DEFAULT_PARAMS = {
   selectedScale: 'major',
   attack: 0.1,
   decay: 0.3,
-  sustain: 0.8,
+  sustain: 0.4, // Set to 40%
   release: 0.4,
   filterFreq: 2000,
   filterQ: 2,
@@ -97,6 +98,50 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
   const synthRef = useRef<any>(null);
   const currentNotesRef = useRef<string[]>([]);
   const patternRef = useRef(pattern);
+
+  // Initialize synth
+  useEffect(() => {
+    const synth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: {
+        type: params.oscillatorType
+      },
+      envelope: {
+        attack: params.attack,
+        decay: params.decay,
+        sustain: params.sustain,
+        release: params.release
+      }
+    }).toDestination();
+
+    const filter = new Tone.Filter({
+      frequency: params.filterFreq,
+      type: 'lowpass',
+      Q: params.filterQ
+    }).toDestination();
+
+    synth.connect(filter);
+    synthRef.current = synth;
+
+    return () => {
+      synth.dispose();
+      filter.dispose();
+    };
+  }, []);
+
+  // Update synth parameters when they change
+  useEffect(() => {
+    if (synthRef.current) {
+      synthRef.current.set({
+        oscillator: { type: params.oscillatorType },
+        envelope: {
+          attack: params.attack,
+          decay: params.decay,
+          sustain: params.sustain,
+          release: params.release
+        }
+      });
+    }
+  }, [params]);
 
   useEffect(() => {
     loadUserPresets();
@@ -346,7 +391,7 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
 
       {!isCollapsed && (
         <>
-          <div className="overflow-x-auto pb-4">
+          <div className="overflow-x-auto">
             <div 
               className="inline-flex gap-1 min-w-full" 
               style={{ width: `max(100%, ${localStepAmount * 40}px)` }}
