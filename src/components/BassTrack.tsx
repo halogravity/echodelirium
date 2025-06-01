@@ -30,6 +30,19 @@ interface PatternPreset {
 const STEP_OPTIONS = [4, 8, 16, 32, 64] as const;
 type StepAmount = typeof STEP_OPTIONS[number];
 
+const DEFAULT_PARAMS = {
+  rootNote: 'C',
+  octave: 2,
+  selectedScale: 'major',
+  attack: 0.01,
+  decay: 0.3,
+  sustain: 0.8,
+  release: 0.2,
+  filterFreq: 800,
+  filterQ: 2,
+  oscillatorType: "sawtooth" as OscillatorType
+};
+
 const BASS_PATTERNS: PatternPreset[] = [
   {
     name: "Classic House",
@@ -84,18 +97,7 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
   const [pattern, setPattern] = useState<boolean[][]>(Array(stepAmount).fill(null).map(() => Array(5).fill(false)));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [localStepAmount, setLocalStepAmount] = useState<StepAmount>(stepAmount as StepAmount);
-  const [params, setParams] = useState(() => ({
-    rootNote: 'C',
-    octave: 2,
-    selectedScale: 'major',
-    attack: 0.01,
-    decay: 0.3,
-    sustain: 0.8,
-    release: 0.2,
-    filterFreq: 800,
-    filterQ: 2,
-    oscillatorType: "sawtooth" as OscillatorType
-  }));
+  const [params, setParams] = useState(() => ({ ...DEFAULT_PARAMS }));
   const [presets, setPresets] = useState<Preset[]>([]);
   const [isLoadingPresets, setIsLoadingPresets] = useState(false);
   const [isSavingPreset, setIsSavingPreset] = useState(false);
@@ -149,13 +151,18 @@ const BassTrack = forwardRef<BassTrackRef, BassTrackProps>(({
   const handleLoadPreset = (preset: Preset) => {
     try {
       const presetData = preset.parameters as any;
-      setPattern(presetData.pattern);
-      setParams(presetData.params);
+      setPattern(presetData.pattern || Array(localStepAmount).fill(null).map(() => Array(5).fill(false)));
+      setParams(prev => ({
+        ...DEFAULT_PARAMS,
+        ...(presetData.params || {})
+      }));
       if (presetData.stepAmount) {
         handleStepAmountChange(presetData.stepAmount);
       }
     } catch (error) {
       console.error('Error loading preset:', error);
+      // Reset to default values if loading fails
+      setParams({ ...DEFAULT_PARAMS });
     }
   };
 

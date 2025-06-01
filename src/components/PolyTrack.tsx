@@ -20,6 +20,19 @@ export interface PolyTrackRef {
 const STEP_OPTIONS = [4, 8, 16, 32, 64] as const;
 type StepAmount = typeof STEP_OPTIONS[number];
 
+const DEFAULT_PARAMS = {
+  rootNote: 'C',
+  octave: 4,
+  selectedScale: 'major',
+  attack: 0.1,
+  decay: 0.3,
+  sustain: 0.8,
+  release: 0.4,
+  filterFreq: 2000,
+  filterQ: 2,
+  oscillatorType: "sine" as OscillatorType
+};
+
 const POLY_PATTERNS = [
   {
     name: "Ambient Pad",
@@ -74,18 +87,7 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
   const [pattern, setPattern] = useState<boolean[][]>(Array(stepAmount).fill(null).map(() => Array(5).fill(false)));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [localStepAmount, setLocalStepAmount] = useState<StepAmount>(stepAmount as StepAmount);
-  const [params, setParams] = useState(() => ({
-    rootNote: 'C',
-    octave: 4,
-    selectedScale: 'major',
-    attack: 0.1,
-    decay: 0.3,
-    sustain: 0.8,
-    release: 0.4,
-    filterFreq: 2000,
-    filterQ: 2,
-    oscillatorType: "sine" as OscillatorType
-  }));
+  const [params, setParams] = useState(() => ({ ...DEFAULT_PARAMS }));
   const [presets, setPresets] = useState<Preset[]>([]);
   const [isLoadingPresets, setIsLoadingPresets] = useState(false);
   const [isSavingPreset, setIsSavingPreset] = useState(false);
@@ -139,13 +141,18 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
   const handleLoadPreset = (preset: Preset) => {
     try {
       const presetData = preset.parameters as any;
-      setPattern(presetData.pattern);
-      setParams(presetData.params);
+      setPattern(presetData.pattern || Array(localStepAmount).fill(null).map(() => Array(5).fill(false)));
+      setParams(prev => ({
+        ...DEFAULT_PARAMS,
+        ...(presetData.params || {})
+      }));
       if (presetData.stepAmount) {
         handleStepAmountChange(presetData.stepAmount);
       }
     } catch (error) {
       console.error('Error loading preset:', error);
+      // Reset to default values if loading fails
+      setParams({ ...DEFAULT_PARAMS });
     }
   };
 
@@ -189,7 +196,8 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
         currentNotesRef.current = [];
       }
     }
-  }), [params.rootNote, params.octave, params.selectedScale]);
+  }),
+  [params.rootNote, params.octave, params.selectedScale]);
 
   const handleStepAmountChange = (steps: number) => {
     const newStepAmount = steps as StepAmount;
