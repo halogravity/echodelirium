@@ -98,8 +98,9 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
   const synthRef = useRef<any>(null);
   const currentNotesRef = useRef<string[]>([]);
   const patternRef = useRef(pattern);
+  const lastStepRef = useRef<number>(-1);
+  const lastTriggerTimeRef = useRef<number>(0);
 
-  // Initialize synth
   useEffect(() => {
     const synth = new Tone.PolySynth(Tone.Synth, {
       oscillator: {
@@ -128,7 +129,6 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
     };
   }, []);
 
-  // Update synth parameters when they change
   useEffect(() => {
     if (synthRef.current) {
       synthRef.current.set({
@@ -146,6 +146,58 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
   useEffect(() => {
     loadUserPresets();
   }, []);
+
+  useEffect(() => {
+    patternRef.current = pattern;
+  }, [pattern]);
+
+  useImperativeHandle(ref, () => ({
+    getCurrentNotes: () => currentNotesRef.current,
+    stopCurrentNotes: () => {
+      if (synthRef.current && currentNotesRef.current.length > 0) {
+        synthRef.current.releaseAll();
+        currentNotesRef.current = [];
+      }
+    },
+    playStep: (step: number, time?: number) => {
+      if (!synthRef.current || step >= patternRef.current.length) return;
+
+      let now = time || Tone.now();
+      
+      // Ensure minimum time between triggers to prevent overlapping
+      if (now <= lastTriggerTimeRef.current) {
+        now = lastTriggerTimeRef.current + 0.01;
+      }
+
+      // Always release previous notes before triggering new ones
+      if (currentNotesRef.current.length > 0) {
+        synthRef.current.releaseAll(now);
+        currentNotesRef.current = [];
+      }
+
+      const scaleNotes = Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes;
+      const stepPattern = patternRef.current[step];
+      const activeNotes = stepPattern
+        .map((isActive, index) => isActive ? scaleNotes[index] : null)
+        .filter(Boolean) as string[];
+
+      if (activeNotes.length > 0) {
+        synthRef.current.triggerAttack(activeNotes, now);
+        currentNotesRef.current = activeNotes;
+        lastTriggerTimeRef.current = now;
+      }
+
+      lastStepRef.current = step;
+    },
+    stop: () => {
+      if (synthRef.current) {
+        synthRef.current.releaseAll();
+        currentNotesRef.current = [];
+      }
+      lastStepRef.current = -1;
+      lastTriggerTimeRef.current = 0;
+    }
+  }), [params.rootNote, params.octave, params.selectedScale]);
 
   const loadUserPresets = async () => {
     setIsLoadingPresets(true);
@@ -196,53 +248,9 @@ const PolyTrack = forwardRef<PolyTrackRef, PolyTrackProps>(({
       }
     } catch (error) {
       console.error('Error loading preset:', error);
-      // Reset to default values if loading fails
       setParams({ ...DEFAULT_PARAMS });
     }
   };
-
-  useEffect(() => {
-    patternRef.current = pattern;
-  }, [pattern]);
-
-  useImperativeHandle(ref, () => ({
-    getCurrentNotes: () => currentNotesRef.current,
-    stopCurrentNotes: () => {
-      if (synthRef.current) {
-        currentNotesRef.current.forEach(note => {
-          synthRef.current.triggerRelease(note);
-        });
-        currentNotesRef.current = [];
-      }
-    },
-    playStep: (step: number, time?: number) => {
-      if (!synthRef.current || step >= patternRef.current.length) return;
-
-      const scaleNotes = Scale.get(`${params.rootNote}${params.octave} ${params.selectedScale}`).notes;
-      const stepPattern = patternRef.current[step];
-      const activeNotes = stepPattern
-        .map((isActive, index) => isActive ? scaleNotes[index] : null)
-        .filter(Boolean) as string[];
-
-      if (activeNotes.length > 0) {
-        currentNotesRef.current = activeNotes;
-        activeNotes.forEach(note => {
-          if (synthRef.current) {
-            synthRef.current.triggerAttack(note, time);
-          }
-        });
-      }
-    },
-    stop: () => {
-      if (synthRef.current) {
-        currentNotesRef.current.forEach(note => {
-          synthRef.current.triggerRelease(note);
-        });
-        currentNotesRef.current = [];
-      }
-    }
-  }),
-  [params.rootNote, params.octave, params.selectedScale]);
 
   const handleStepAmountChange = (steps: number) => {
     const newStepAmount = steps as StepAmount;
