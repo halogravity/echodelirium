@@ -10,9 +10,9 @@ const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-      <div className="bg-black/95 border border-red-900/30 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-black/95 border-b border-red-900/20 p-4 flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[99999] flex items-center justify-center p-4" style={{ zIndex: 99999 }}>
+      <div className="bg-black/95 border border-red-900/30 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative z-[100000]" style={{ zIndex: 100000 }}>
+        <div className="sticky top-0 bg-black/95 border-b border-red-900/20 p-4 flex items-center justify-between z-[100001]" style={{ zIndex: 100001 }}>
           <h2 className="text-xl font-mono text-red-500 uppercase tracking-wider flex items-center gap-2">
             <Skull className="w-6 h-6" />
             Echo Delirium Manual
