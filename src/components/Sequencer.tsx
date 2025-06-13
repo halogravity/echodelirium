@@ -158,139 +158,156 @@ const Sequencer: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black/40 relative">
-      <Manual isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
-      
-      <div className="fixed top-16 left-0 right-0 z-40 bg-black/95 border-b border-red-900/20 backdrop-blur-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={startSequencer}
-                className={`
-                  flex items-center gap-2 px-4 py-2 transition-colors relative overflow-hidden
-                  ${isPlaying
-                    ? 'bg-red-900/40 border-red-600/50 text-red-500'
-                    : 'bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/30'
-                  }
-                `}
-              >
-                {isPlaying ? (
-                  <>
-                    <Square className="w-4 h-4" />
-                    Stop
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4" />
-                    Play
-                  </>
-                )}
-              </button>
+    <>
+      {/* Render Manual at the very top level */}
+      {isManualOpen && (
+        <div 
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+          style={{ 
+            zIndex: 999999,
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0
+          }}
+        >
+          <Manual isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
+        </div>
+      )}
 
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-red-500/70" />
-                <input
-                  type="number"
-                  value={bpm}
-                  onChange={(e) => setBpm(parseInt(e.target.value))}
-                  className="w-16 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-sm font-mono"
-                  min="20"
-                  max="300"
-                />
-                <span className="text-red-500/70 text-sm font-mono">BPM</span>
+      <div className="min-h-screen bg-black/40 relative">
+        <div className="fixed top-16 left-0 right-0 z-40 bg-black/95 border-b border-red-900/20 backdrop-blur-sm">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={startSequencer}
+                  className={`
+                    flex items-center gap-2 px-4 py-2 transition-colors relative overflow-hidden
+                    ${isPlaying
+                      ? 'bg-red-900/40 border-red-600/50 text-red-500'
+                      : 'bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/30'
+                    }
+                  `}
+                >
+                  {isPlaying ? (
+                    <>
+                      <Square className="w-4 h-4" />
+                      Stop
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4" />
+                      Play
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-red-500/70" />
+                  <input
+                    type="number"
+                    value={bpm}
+                    onChange={(e) => setBpm(parseInt(e.target.value))}
+                    className="w-16 bg-black/30 border border-red-900/30 text-red-200 px-2 py-1 text-sm font-mono"
+                    min="20"
+                    max="300"
+                  />
+                  <span className="text-red-500/70 text-sm font-mono">BPM</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-red-500/70 text-sm font-mono">Swing:</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={swing}
+                    onChange={(e) => setSwing(parseFloat(e.target.value))}
+                    className="w-24 accent-red-500"
+                  />
+                  <span className="text-red-500/50 text-xs font-mono">
+                    {Math.round(swing * 100)}%
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setIsManualOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors uppercase tracking-wider border border-red-900/20 hover:border-red-900/40"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Manual
+                </button>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-red-500/70 text-sm font-mono">Swing:</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={swing}
-                  onChange={(e) => setSwing(parseFloat(e.target.value))}
-                  className="w-24 accent-red-500"
-                />
-                <span className="text-red-500/50 text-xs font-mono">
-                  {Math.round(swing * 100)}%
-                </span>
+                <button
+                  onClick={() => addTrack('drum')}
+                  className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
+                >
+                  <Plus className="w-4 h-4" />
+                  Drum
+                </button>
+                <button
+                  onClick={() => addTrack('bass')}
+                  className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
+                >
+                  <Plus className="w-4 h-4" />
+                  Bass Synth
+                </button>
+                <button
+                  onClick={() => addTrack('poly')}
+                  className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
+                >
+                  <Plus className="w-4 h-4" />
+                  Poly Synth
+                </button>
               </div>
-
-              <button
-                onClick={() => setIsManualOpen(true)}
-                className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors uppercase tracking-wider border border-red-900/20 hover:border-red-900/40"
-              >
-                <BookOpen className="w-4 h-4" />
-                Manual
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => addTrack('drum')}
-                className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
-              >
-                <Plus className="w-4 h-4" />
-                Drum
-              </button>
-              <button
-                onClick={() => addTrack('bass')}
-                className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
-              >
-                <Plus className="w-4 h-4" />
-                Bass Synth
-              </button>
-              <button
-                onClick={() => addTrack('poly')}
-                className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors border border-red-900/20 hover:border-red-900/40"
-              >
-                <Plus className="w-4 h-4" />
-                Poly Synth
-              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="pt-40 px-6 space-y-4">
-        {tracks.map(track => {
-          if (track.type === 'drum') {
-            return (
-              <DrumTrack
-                key={track.id}
-                ref={track.ref as React.RefObject<DrumTrackRef>}
-                currentStep={track.currentStep}
-                stepAmount={track.stepAmount}
-                defaultSamplePath={track.defaultSamplePath}
-                name={track.name}
-                onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
-              />
-            );
-          } else if (track.type === 'bass') {
-            return (
-              <BassTrack
-                key={track.id}
-                ref={track.ref as React.RefObject<BassTrackRef>}
-                currentStep={track.currentStep}
-                stepAmount={track.stepAmount}
-                onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
-              />
-            );
-          } else {
-            return (
-              <PolyTrack
-                key={track.id}
-                ref={track.ref as React.RefObject<PolyTrackRef>}
-                currentStep={track.currentStep}
-                stepAmount={track.stepAmount}
-                onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
-              />
-            );
-          }
-        })}
+        <div className="pt-40 px-6 space-y-4">
+          {tracks.map(track => {
+            if (track.type === 'drum') {
+              return (
+                <DrumTrack
+                  key={track.id}
+                  ref={track.ref as React.RefObject<DrumTrackRef>}
+                  currentStep={track.currentStep}
+                  stepAmount={track.stepAmount}
+                  defaultSamplePath={track.defaultSamplePath}
+                  name={track.name}
+                  onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
+                />
+              );
+            } else if (track.type === 'bass') {
+              return (
+                <BassTrack
+                  key={track.id}
+                  ref={track.ref as React.RefObject<BassTrackRef>}
+                  currentStep={track.currentStep}
+                  stepAmount={track.stepAmount}
+                  onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
+                />
+              );
+            } else {
+              return (
+                <PolyTrack
+                  key={track.id}
+                  ref={track.ref as React.RefObject<PolyTrackRef>}
+                  currentStep={track.currentStep}
+                  stepAmount={track.stepAmount}
+                  onStepAmountChange={(steps) => handleTrackStepAmountChange(track.id, steps)}
+                />
+              );
+            }
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
