@@ -9,6 +9,7 @@ export class AudioDeepDream {
   private isInitialized = false;
   private readonly maxRetries = 3;
   private readonly retryDelay = 2000;
+  private initializationAttempted = false;
 
   constructor() {
     this.initializeModel();
@@ -28,33 +29,61 @@ export class AudioDeepDream {
         loss: 'meanSquaredError'
       });
 
-      await this.initializeMagenta();
+      // Only attempt Magenta initialization once
+      if (!this.initializationAttempted) {
+        this.initializationAttempted = true;
+        await this.initializeMagenta();
+      }
+      
       this.isInitialized = true;
     } catch (error) {
       console.error('Error initializing model:', error);
+      this.isInitialized = true; // Still mark as initialized so basic processing works
     }
   }
 
-  private async initializeMagenta(retryCount = 0) {
+  private async initializeMagenta(retryCount = 0): Promise<void> {
     try {
-      // Use smaller models to reduce memory usage
+      // Check if we're in a development environment and skip if network issues
+      if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+        console.warn('Skipping Magenta initialization in development environment due to potential network restrictions');
+        return;
+      }
+
+      // Use smaller models to reduce memory usage and improve reliability
       this.musicVAE = new mm.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/mel_2bar_small');
       this.musicRNN = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
 
-      await Promise.all([
+      // Set a timeout for initialization
+      const initPromise = Promise.all([
         this.musicVAE.initialize(),
         this.musicRNN.initialize()
       ]);
 
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Initialization timeout')), 30000);
+      });
+
+      await Promise.race([initPromise, timeoutPromise]);
       console.log('Magenta models initialized successfully');
     } catch (error) {
       console.error(`Error initializing Magenta (attempt ${retryCount + 1}/${this.maxRetries}):`, error);
       
-      if (retryCount < this.maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+      // Clean up failed instances
+      if (this.musicVAE) {
+        try { this.musicVAE.dispose(); } catch (e) { /* ignore */ }
+        this.musicVAE = null;
+      }
+      if (this.musicRNN) {
+        try { this.musicRNN.dispose(); } catch (e) { /* ignore */ }
+        this.musicRNN = null;
+      }
+      
+      if (retryCount < this.maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, this.retryDelay * Math.pow(2, retryCount)));
         await this.initializeMagenta(retryCount + 1);
       } else {
-        console.error('Failed to initialize Magenta after maximum retries');
+        console.warn('Failed to initialize Magenta after maximum retries - continuing without Magenta features');
       }
     }
   }
@@ -65,7 +94,16 @@ export class AudioDeepDream {
     }
 
     try {
-      const tensor = tf.tensor2d([Array.from(audioData)]);
+      // Ensure we have the right size for processing
+      const processSize = Math.min(this.layerSize, audioData.length);
+      const inputData = Array.from(audioData.slice(0, processSize));
+      
+      // Pad with zeros if needed
+      while (inputData.length < this.layerSize) {
+        inputData.push(0);
+      }
+
+      const tensor = tf.tensor2d([inputData]);
       let processed = tensor;
 
       // Basic audio processing
@@ -79,7 +117,15 @@ export class AudioDeepDream {
       tensor.dispose();
       processed.dispose();
 
-      return new Float32Array(result[0]);
+      // Return the processed data, trimmed to original size
+      const processedArray = new Float32Array(audioData.length);
+      const resultData = result[0] as number[];
+      
+      for (let i = 0; i < audioData.length; i++) {
+        processedArray[i] = i < resultData.length ? resultData[i] : audioData[i];
+      }
+
+      return processedArray;
     } catch (error) {
       console.error('Error processing audio:', error);
       return audioData;
@@ -92,14 +138,15 @@ export class AudioDeepDream {
       this.model = null;
     }
     if (this.musicVAE) {
-      this.musicVAE.dispose();
+      try { this.musicVAE.dispose(); } catch (e) { /* ignore */ }
       this.musicVAE = null;
     }
     if (this.musicRNN) {
-      this.musicRNN.dispose();
+      try { this.musicRNN.dispose(); } catch (e) { /* ignore */ }
       this.musicRNN = null;
     }
     this.isInitialized = false;
+    this.initializationAttempted = false;
   }
 
   public isEnabled(): boolean {

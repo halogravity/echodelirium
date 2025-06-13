@@ -1,4 +1,19 @@
-import express from 'express';    // Initialize MusicRNN for melody continuation
+import express from 'express';
+import cors from 'cors';
+import * as mm from '@magenta/music';
+import * as tf from '@tensorflow/tfjs';
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+let musicRNN = null;
+let musicVAE = null;
+
+async function initializeMagenta() {
+  try {
+    console.log('Initializing Magenta models...');
+    
+    // Initialize MusicRNN for melody continuation
     musicRNN = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
     await musicRNN.initialize();
 
@@ -104,19 +119,19 @@ async function applyDeepDream(audioData, iterations = 1) {
           const bands = tf.split(tensor, 4);
           
           // Apply non-linear transformations to each band
-          const processed = bands.map(band => {
+          const processedBands = bands.map(band => {
             const amplified = band.mul(1.2);
             const shifted = amplified.add(0.1);
             return tf.tanh(shifted);
           });
           
           // Recombine bands with added harmonics
-          return tf.concat(processed).mul(0.8);
+          return tf.concat(processedBands).mul(0.8);
         });
         
         // Update the processed audio
         const dreamedData = await dreamed.array();
-        processed.set(dreamedData, j);
+        processed.splice(j, dreamedData.length, ...dreamedData);
         
         // Cleanup
         tensor.dispose();
