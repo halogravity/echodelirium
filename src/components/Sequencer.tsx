@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Square, Settings, Music2, Volume2, Clock, Plus } from 'lucide-react';
+import { Play, Square, Settings, Music2, Volume2, Clock, Plus, BookOpen } from 'lucide-react';
 import * as Tone from 'tone';
 import DrumTrack from './DrumTrack';
 import BassTrack from './BassTrack';
 import PolyTrack from './PolyTrack';
+import Manual from './Manual';
 import type { DrumTrackRef } from './DrumTrack';
 import type { BassTrackRef } from './BassTrack';
 import type { PolyTrackRef } from './PolyTrack';
@@ -22,6 +23,7 @@ const Sequencer: React.FC = () => {
   const [bpm, setBpm] = useState(120);
   const [swing, setSwing] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isManualOpen, setIsManualOpen] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([
     {
       id: 'kick',
@@ -157,6 +159,8 @@ const Sequencer: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black/40 relative">
+      <Manual isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
+      
       <div className="fixed top-16 left-0 right-0 z-40 bg-black/95 border-b border-red-900/20 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-col gap-4">
@@ -212,6 +216,14 @@ const Sequencer: React.FC = () => {
                   {Math.round(swing * 100)}%
                 </span>
               </div>
+
+              <button
+                onClick={() => setIsManualOpen(true)}
+                className="flex items-center gap-2 px-3 py-1 text-xs font-mono text-red-500/70 hover:text-red-500 transition-colors uppercase tracking-wider border border-red-900/20 hover:border-red-900/40"
+              >
+                <BookOpen className="w-4 h-4" />
+                Manual
+              </button>
             </div>
 
             <div className="flex items-center gap-2">
