@@ -3,6 +3,7 @@ import { useAuth } from './lib/auth';
 import { AudioRecorder } from './components/AudioRecorder';
 import Login from './components/Login';
 import ErrorBoundary from './components/ErrorBoundary';
+import Manual from './components/Manual';
 import { Moon, LogOut, BookOpen, Music, Menu, X } from 'lucide-react';
 import Sequencer from './components/Sequencer';
 
@@ -56,6 +57,23 @@ function App() {
 
   return (
     <ErrorBoundary>
+      {/* Render Manual at the very top level with maximum z-index */}
+      {isManualOpen && (
+        <div 
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+          style={{ 
+            zIndex: 999999,
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0
+          }}
+        >
+          <Manual isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
+        </div>
+      )}
+
       <div className="w-screen h-screen bg-black flex flex-col overflow-hidden">
         <div className="noise" />
         <div className="scanlines" />
